@@ -1,0 +1,52 @@
+# Advanced RAG Ablation Study
+# 6 conditions on 100-question subset
+# Each condition adds exactly one component over Simple RAG baseline
+
+experiment:
+  name: ablation
+  description: >
+    Isolates contribution of each Advanced RAG component.
+    Runs on 100-question ablation subset for efficiency.
+
+model:
+  generation: gemini-2.5-flash-preview-04-17
+  judge:      gpt-4o
+  temperature: 0.0
+  max_output_tokens: 512
+
+rag:
+  chunk_size: 512
+  top_k: 5
+  rerank_top_m: 3
+  chunking_strategy: fixed
+
+data:
+  qa_path:     data/qa_dataset/qa_pairs_ablation.jsonl
+  sample_meta: data/metadata/sample_50.csv
+
+conditions:
+  - name: simple_rag_baseline
+    flags: { use_query_rewrite: false, use_metadata_filter: false, use_hybrid_search: false, use_reranking: false }
+
+  - name: plus_query_rewrite
+    flags: { use_query_rewrite: true,  use_metadata_filter: false, use_hybrid_search: false, use_reranking: false }
+
+  - name: plus_reranking
+    flags: { use_query_rewrite: false, use_metadata_filter: false, use_hybrid_search: false, use_reranking: true }
+
+  - name: plus_hybrid_search
+    flags: { use_query_rewrite: false, use_metadata_filter: false, use_hybrid_search: true,  use_reranking: false }
+
+  - name: plus_metadata_filter
+    flags: { use_query_rewrite: false, use_metadata_filter: true,  use_hybrid_search: false, use_reranking: false }
+
+  - name: full_advanced_rag
+    flags: { use_query_rewrite: true,  use_metadata_filter: true,  use_hybrid_search: true,  use_reranking: true }
+
+evaluation:
+  run_faithfulness: true
+  run_bertscore:    false   # skip for speed on ablation
+  run_retrieval:    true
+
+output:
+  results_base: results/ablation

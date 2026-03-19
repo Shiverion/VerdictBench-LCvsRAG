@@ -1,0 +1,49 @@
+# Phase 1: Controlled Architectural Comparison
+# Single model, three conditions, full 350-QA dataset
+
+experiment:
+  name: phase1_baseline
+  description: >
+    LC vs Simple RAG vs Advanced RAG using Gemini 2.5 Flash.
+    All hyperparameters fixed. Evaluates full 350 QA pairs.
+
+model:
+  generation: gemini-2.5-flash-preview-04-17
+  judge:      gpt-4o
+  embedding:  models/text-embedding-004
+  temperature: 0.0
+  max_output_tokens: 512
+
+rag:
+  chunk_size: 512          # default; see sensitivity.yaml for grid
+  top_k: 5
+  chunking_strategy: fixed
+  rerank_top_m: 3
+
+data:
+  qa_path:      data/qa_dataset/qa_pairs_full.jsonl
+  sample_meta:  data/metadata/sample_50.csv
+
+conditions:
+  - name: lc
+    system: LongContextSystem
+    windowed: false
+
+  - name: simple_rag
+    system: SimpleRAGSystem
+
+  - name: advanced_rag
+    system: AdvancedRAGSystem
+    flags:
+      use_query_rewrite:   true
+      use_metadata_filter: true
+      use_hybrid_search:   true
+      use_reranking:       true
+
+evaluation:
+  run_faithfulness:  true
+  run_bertscore:     true   # expensive — set false for quick runs
+  run_retrieval:     true
+
+output:
+  results_base: results/phase1

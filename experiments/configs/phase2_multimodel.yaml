@@ -1,0 +1,47 @@
+# Phase 2: Context Window Size Interaction
+# 2x3 factorial: model (Gemini 1M / GPT-4o 128k) x architecture (LC/SimpleRAG/AdvancedRAG)
+
+experiment:
+  name: phase2_multimodel
+  description: >
+    Tests H1: larger context windows reduce dependency on retrieval.
+    NOTE: Model quality confound is acknowledged — Phase 2 is exploratory.
+
+models:
+  - id: gemini_flash
+    name: gemini-2.5-flash-preview-04-17
+    context_window_tokens: 1000000
+    windowed: false
+
+  - id: gpt4o
+    name: gpt-4o
+    context_window_tokens: 128000
+    windowed: true    # LC truncated for docs > 100k tokens
+
+judge:  gpt-4o
+embedding: models/text-embedding-004
+temperature: 0.0
+max_output_tokens: 512
+
+rag:
+  chunk_size: 512
+  top_k: 5
+  chunking_strategy: fixed
+  rerank_top_m: 3
+
+data:
+  qa_path:      data/qa_dataset/qa_pairs_full.jsonl
+  sample_meta:  data/metadata/sample_50.csv
+
+conditions:
+  - lc
+  - simple_rag
+  - advanced_rag
+
+evaluation:
+  run_faithfulness: true
+  run_bertscore:    true
+  run_retrieval:    true
+
+output:
+  results_base: results/phase2

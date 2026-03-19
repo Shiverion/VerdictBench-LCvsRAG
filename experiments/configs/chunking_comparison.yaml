@@ -1,0 +1,37 @@
+# Section 8.4: Fixed-size vs Section-boundary chunking comparison
+
+experiment:
+  name: chunking_comparison
+  description: >
+    Compares fixed-size chunking (512 tokens, recursive char splitter)
+    vs section-boundary chunking ([X.X] MK paragraph alignment).
+    Hypothesis: section-boundary improves precision on multi-section questions.
+
+model:
+  generation: gemini-2.5-flash-preview-04-17
+  temperature: 0.0
+  max_output_tokens: 512
+
+rag:
+  chunk_size: 512
+  top_k: 5
+  rerank_top_m: 3
+
+data:
+  qa_path:     data/qa_dataset/qa_pairs_ablation.jsonl
+  sample_meta: data/metadata/sample_50.csv
+
+conditions:
+  - name: simple_rag_fixed
+    chunking_strategy: fixed
+
+  - name: simple_rag_section
+    chunking_strategy: section
+
+evaluation:
+  run_faithfulness: true
+  run_bertscore:    false
+  run_retrieval:    true
+
+output:
+  results_base: results/additional/chunking_comparison
