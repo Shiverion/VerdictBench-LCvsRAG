@@ -637,16 +637,14 @@ uv run pytest tests/evaluation/ -v
 uv run pytest tests/systems/test_simple_rag.py -v
 ```
 
-### Cost quick reference
-
-| Action | Model | Est. Cost |
-|---|---|---|
-| Embed 50 verdicts | text-embedding-004 | Free |
-| Phase 1 generation (300q × 3 cond) | Gemini 2.5 Flash | ~$0.30 |
-| Phase 1 faithfulness eval | Two-model Gemini | ~$0.50 |
-| Phase 2 generation (300q × 3 cond) | GPT-4o Mini | ~$1.50 |
-| Ablation (100q × 6 cond) | Gemini | ~$0.20 |
-| **Full pipeline** | | **~$3.00** |
+| Phase | Metric | Generation Cost | Eval Cost | Total Cost |
+|:---|:---|:---|:---|:---|
+| Embed 50 verdicts | 50 docs | Free | — | $0.00 |
+| QA generation | 350 pairs | ~$0.15 | — | ~$0.15 |
+| Phase 1 | 3 conditions | $5.01 | $1.77 | **$6.78** |
+| Phase 2 (In Progress) | 3 conditions × 2 models | $5.03 | $0.79 | **$5.82** |
+| Ablation (Pending) | 6 conditions | — | — | — |
+| **Total Spent to Date** | | | | **~$12.75** |
 
 ### Result file format
 

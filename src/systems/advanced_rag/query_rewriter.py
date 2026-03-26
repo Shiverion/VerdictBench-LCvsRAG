@@ -9,7 +9,8 @@ from __future__ import annotations
 
 import os
 
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from openai import OpenAI
 
 from src.utils.config import cfg
@@ -17,7 +18,7 @@ from src.utils.logger import get_logger
 
 log = get_logger(__name__)
 
-genai.configure(api_key=os.getenv("GOOGLE_API_KEY", ""))
+client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY", ""))
 _openai = OpenAI(api_key=os.getenv("OPENAI_API_KEY", ""))
 
 _REWRITE_PROMPT = """Anda adalah sistem pengambilan informasi hukum.
@@ -50,15 +51,16 @@ def rewrite_query(question: str, model: str | None = None) -> list[str]:
     prompt = _REWRITE_PROMPT.format(question=question)
 
     try:
-        if model.startswith("gemini"):
-            llm = genai.GenerativeModel(
-                model,
-                generation_config=genai.types.GenerationConfig(
+        if "gemini" in model.lower():
+            response = client.models.generate_content(
+                model=model,
+                contents=prompt,
+                config=types.GenerateContentConfig(
                     temperature=0.0,
                     max_output_tokens=200,
                 ),
             )
-            raw = llm.generate_content(prompt).text.strip()
+            raw = response.text.strip()
         else:
             response = _openai.chat.completions.create(
                 model=model,

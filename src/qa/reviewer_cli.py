@@ -38,14 +38,31 @@ def _load_progress() -> set[str]:
     return set()
 
 
+def _load_grounding_flags() -> set[str]:
+    """Load IDs of pairs that failed the verbatim grounding check."""
+    flags_path = cfg.paths.qa_dir / "grounding_flags.json"
+    if flags_path.exists():
+        return set(json.loads(flags_path.read_text(encoding="utf-8")))
+    return set()
+
+def _load_duplicate_flags() -> set[str]:
+    """Load IDs of pairs that were flagged as semantic duplicates."""
+    flags_path = cfg.paths.qa_dir / "duplicate_flags.json"
+    if flags_path.exists():
+        return set(json.loads(flags_path.read_text(encoding="utf-8")))
+    return set()
+
 def _save_progress(reviewed_ids: set[str]) -> None:
     PROGRESS_PATH.write_text(json.dumps(list(reviewed_ids)))
 
 
-def _display_pair(pair: dict, idx: int, total: int) -> None:
+def _display_pair(pair: dict, idx: int, total: int, grounding_flags: set[str], duplicate_flags: set[str]) -> None:
     console.print(f"\n[dim]── {idx+1}/{total} ─────────────────────────────────────[/dim]")
+    warning_g = "[bold red]⚠ GROUNDING FLAG: Answer not verbatim in source[/]\n" if pair["question_id"] in grounding_flags else ""
+    warning_d = "[bold magenta]⚠ DUPLICATE FLAG: Semantically identical to another pair in this verdict[/]\n" if pair["question_id"] in duplicate_flags else ""
+    warning = warning_g + warning_d
     console.print(Panel(
-        f"[bold cyan]Verdict:[/] {pair['verdict_id']}\n"
+        f"{warning}[bold cyan]Verdict:[/] {pair['verdict_id']}\n"
         f"[bold cyan]Type:[/]    {pair['question_type']}\n"
         f"[bold cyan]ID:[/]      {pair['question_id']}",
         title="[bold]QA Pair",
@@ -61,7 +78,8 @@ def _display_pair(pair: dict, idx: int, total: int) -> None:
         ))
 
 
-def run_review(resume: bool = False) -> None:
+def run_review(resume: bool = False, output_path: Path | None = None) -> None:
+    target_reviewed_path = output_path if output_path else REVIEWED_PATH
     if not DRAFTS_PATH.exists():
         console.print(f"[red]Draft file not found: {DRAFTS_PATH}[/red]")
         console.print("Run: bash scripts/generate_qa_drafts.sh")
@@ -74,20 +92,25 @@ def run_review(resume: bool = False) -> None:
                 drafts.append(json.loads(line))
 
     reviewed_ids = _load_progress() if resume else set()
+    grounding_flags = _load_grounding_flags()
+    duplicate_flags = _load_duplicate_flags()
     pending = [d for d in drafts if d["question_id"] not in reviewed_ids]
 
     console.print(f"\n[bold]QA Review CLI[/bold]")
     console.print(f"Total drafts: {len(drafts)} | Reviewed: {len(reviewed_ids)} | Pending: {len(pending)}")
+    console.print(f"Grounding flags detected: {len(grounding_flags)}")
+    console.print(f"Duplicate flags detected: {len(duplicate_flags)}")
+    console.print(f"Output: {target_reviewed_path}")
     console.print("\n[dim]Commands: [a]ccept  [m]odify  [r]eject  [q]uit[/dim]\n")
 
-    REVIEWED_PATH.parent.mkdir(parents=True, exist_ok=True)
-    out_file = open(REVIEWED_PATH, "a", encoding="utf-8")
+    target_reviewed_path.parent.mkdir(parents=True, exist_ok=True)
+    out_file = open(target_reviewed_path, "a", encoding="utf-8")
 
     accepted = modified = rejected = 0
 
     try:
         for i, pair in enumerate(pending):
-            _display_pair(pair, i, len(pending))
+            _display_pair(pair, i, len(pending), grounding_flags, duplicate_flags)
             action = Prompt.ask(
                 "[bold]Action[/bold]",
                 choices=["a", "m", "r", "q"],
@@ -113,8 +136,13 @@ def run_review(resume: bool = False) -> None:
                     "New answer (enter to keep)",
                     default=pair["gold_answer"],
                 )
+                new_p = Prompt.ask(
+                    "New gold paragraphs (separated by ' || ', enter to keep)",
+                    default=" || ".join(pair.get("gold_paragraphs", [])),
+                )
                 pair["question"]    = new_q
                 pair["gold_answer"] = new_a
+                pair["gold_paragraphs"] = [p.strip() for p in new_p.split(" || ") if p.strip()]
                 pair["status"]      = "modified"
                 out_file.write(json.dumps(pair, ensure_ascii=False) + "\n")
                 out_file.flush()
@@ -133,12 +161,15 @@ def run_review(resume: bool = False) -> None:
     console.print(f"  Accepted:  {accepted}")
     console.print(f"  Modified:  {modified}")
     console.print(f"  Rejected:  {rejected}")
-    console.print(f"  Output → {REVIEWED_PATH}")
+    console.print(f"  Output → {target_reviewed_path}")
 
 
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("--resume", action="store_true", help="Skip already-reviewed pairs")
+    parser.add_argument("--output", type=str, help="Custom output JSONL path (e.g. for IAA)")
     args = parser.parse_args()
-    run_review(resume=args.resume)
+    
+    out_p = Path(args.output) if args.output else None
+    run_review(resume=args.resume, output_path=out_p)

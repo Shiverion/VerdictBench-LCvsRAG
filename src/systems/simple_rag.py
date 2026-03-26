@@ -9,7 +9,8 @@ import os
 import time
 from pathlib import Path
 
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from openai import OpenAI
 
 from src.indexing.chunkers.fixed_size import FixedSizeChunker
@@ -23,7 +24,7 @@ from src.utils.token_counter import count_tokens, estimate_cost
 
 log = get_logger(__name__)
 
-genai.configure(api_key=os.getenv("GOOGLE_API_KEY", ""))
+client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY", ""))
 _openai = OpenAI(api_key=os.getenv("OPENAI_API_KEY", ""))
 
 
@@ -85,15 +86,16 @@ class SimpleRAGSystem(QASystem):
         self.registry.build_and_save(verdict_id, chunks)
 
     def _call_llm(self, prompt: str) -> str:
-        if self.model.startswith("gemini"):
-            model = genai.GenerativeModel(
-                self.model,
-                generation_config=genai.types.GenerationConfig(
+        if "gemini" in self.model.lower():
+            response = client.models.generate_content(
+                model=self.model,
+                contents=prompt,
+                config=types.GenerateContentConfig(
                     temperature=cfg.models.temperature,
                     max_output_tokens=cfg.models.max_output_tokens,
                 ),
             )
-            return model.generate_content(prompt).text.strip()
+            return response.text.strip()
         else:
             response = _openai.chat.completions.create(
                 model=self.model,

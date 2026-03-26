@@ -11,9 +11,11 @@ from __future__ import annotations
 
 import os
 import time
+import time
 from pathlib import Path
 
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from openai import OpenAI
 
 from src.systems.base import QAResult, QASystem
@@ -24,7 +26,7 @@ from src.utils.token_counter import count_tokens, estimate_cost
 
 log = get_logger(__name__)
 
-genai.configure(api_key=os.getenv("GOOGLE_API_KEY", ""))
+client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY", ""))
 _openai = OpenAI(api_key=os.getenv("OPENAI_API_KEY", ""))
 
 # GPT-4o safe context limit (tokens → approx chars)
@@ -75,14 +77,14 @@ class LongContextSystem(QASystem):
         return text
 
     def _call_gemini(self, prompt: str) -> str:
-        model = genai.GenerativeModel(
-            self.model,
-            generation_config=genai.types.GenerationConfig(
+        response = client.models.generate_content(
+            model=self.model,
+            contents=prompt,
+            config=types.GenerateContentConfig(
                 temperature=cfg.models.temperature,
                 max_output_tokens=cfg.models.max_output_tokens,
             ),
         )
-        response = model.generate_content(prompt)
         return response.text.strip()
 
     def _call_openai(self, prompt: str) -> str:
@@ -95,7 +97,7 @@ class LongContextSystem(QASystem):
         return response.choices[0].message.content.strip()
 
     def _call_llm(self, prompt: str) -> str:
-        if self.model.startswith("gemini"):
+        if "gemini" in self.model.lower():
             return self._call_gemini(prompt)
         return self._call_openai(prompt)
 

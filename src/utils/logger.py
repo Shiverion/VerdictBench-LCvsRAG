@@ -40,15 +40,28 @@ class RunLogger:
         logger.close()
     """
 
-    def __init__(self, output_dir: Path, condition: str, model: str):
+    def __init__(self, output_dir: Path, condition: str, model: str, append: bool = False):
         output_dir.mkdir(parents=True, exist_ok=True)
         ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-        self.path = output_dir / f"run_{ts}.jsonl"
-        self._file = self.path.open("w", encoding="utf-8")
+        
+        if append:
+            existing = sorted(output_dir.glob("run_*.jsonl"))
+            if existing:
+                self.path = existing[-1]
+                mode = "a"
+            else:
+                self.path = output_dir / f"run_{ts}.jsonl"
+                mode = "w"
+        else:
+            self.path = output_dir / f"run_{ts}.jsonl"
+            mode = "w"
+            
+        self._file = self.path.open(mode, encoding="utf-8")
         self._meta = {"condition": condition, "model": model, "started_at": ts}
         self._count = 0
         self._logger = get_logger(f"RunLogger:{condition}")
-        self._logger.info(f"Run log → {self.path}")
+        msg = f"Appending run log → {self.path}" if mode == "a" else f"Run log → {self.path}"
+        self._logger.info(msg)
 
     def log(self, **kwargs: Any) -> None:
         record = {**self._meta, **kwargs,

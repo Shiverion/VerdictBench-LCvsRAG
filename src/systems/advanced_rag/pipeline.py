@@ -25,7 +25,8 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from openai import OpenAI
 
 from src.data.section_extractor import VerdictSections
@@ -44,7 +45,7 @@ from src.utils.token_counter import count_tokens, estimate_cost
 
 log = get_logger(__name__)
 
-genai.configure(api_key=os.getenv("GOOGLE_API_KEY", ""))
+client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY", ""))
 _openai = OpenAI(api_key=os.getenv("OPENAI_API_KEY", ""))
 
 
@@ -165,15 +166,16 @@ class AdvancedRAGSystem(QASystem):
     # ── LLM call ─────────────────────────────────────────────────────────────
 
     def _call_llm(self, prompt: str) -> str:
-        if self.model.startswith("gemini"):
-            llm = genai.GenerativeModel(
-                self.model,
-                generation_config=genai.types.GenerationConfig(
+        if "gemini" in self.model.lower():
+            response = client.models.generate_content(
+                model=self.model,
+                contents=prompt,
+                config=types.GenerateContentConfig(
                     temperature=cfg.models.temperature,
                     max_output_tokens=cfg.models.max_output_tokens,
                 ),
             )
-            return llm.generate_content(prompt).text.strip()
+            return response.text.strip()
         response = _openai.chat.completions.create(
             model=self.model,
             messages=[{"role": "user", "content": prompt}],
@@ -219,6 +221,10 @@ class AdvancedRAGSystem(QASystem):
                 if active_filter:
                     # Filter chunks before search
                     filtered_chunks = apply_filter(searcher.chunks, active_filter)
+                    if not filtered_chunks:
+                        log.debug(f"Metadata filter removed all chunks. Falling back to unfiltered chunks.")
+                        filtered_chunks = searcher.chunks
+                        
                     temp_index      = self.registry.get(verdict_id)
                     temp_searcher   = HybridSearcher(filtered_chunks, temp_index)
                     candidates      = temp_searcher.search(q, top_k=self.top_k)
@@ -230,7 +236,9 @@ class AdvancedRAGSystem(QASystem):
                 index      = self._ensure_index(verdict_id)
                 candidates = index.search(q, top_k=self.top_k)
                 if active_filter:
-                    candidates = apply_filter(candidates, active_filter)
+                    filtered_cands = apply_filter(candidates, active_filter)
+                    if filtered_cands:
+                        candidates = filtered_cands
 
             all_candidates.extend(candidates)
 
