@@ -462,8 +462,8 @@ All results are saved as JSONL — one record per QA pair with full metadata:
 | Embedding (50 verdicts) | Free | — | $0.00 |
 | Phase 1 (3 conditions) | $5.01 | $1.77 | **$6.78** |
 | Phase 2 (6 cells) | $9.44 | $2.39 | **$11.83** |
-| Ablation (Pending) | — | — | — |
-| **Total Spent** | **$14.45** | **$4.16** | **$18.61** |
+| Ablation (6 cells) | $0.51 | $1.05 | **$1.56** |
+| **Total Spent** | **$14.96** | **$5.21** | **$20.17** |
 
 ---
 
