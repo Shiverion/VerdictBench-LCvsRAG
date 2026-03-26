@@ -5,6 +5,7 @@
   </p>
   <p align="center">
     <a href="#-quickstart">Quickstart</a> •
+    <a href="#-start-here">Start Here</a> •
     <a href="#-experimental-design">Experiments</a> •
     <a href="#-evaluation-metrics">Metrics</a> •
     <a href="#-results--analysis">Results</a> •
@@ -14,11 +15,27 @@
 
 ---
 
-> *First systematic benchmark comparing Long Context, Simple RAG, and Advanced RAG on Indonesian constitutional legal text — 50 verdicts, 350 QA pairs, 11 analysis notebooks.*
+> *Research codebase and benchmark for comparing Long Context, Simple RAG, and Advanced RAG on Indonesian constitutional legal text — 50 verdicts, 300 QA pairs, and publication-oriented analysis artifacts.*
 
 ## 🔬 Overview
 
 This repository contains the **full research pipeline** for an empirical study comparing three LLM-based QA architectures on a corpus of 50 Indonesian Constitutional Court (*Mahkamah Konstitusi*, MK) verdicts.
+
+## 📍 Start Here
+
+If you are new to the repository, use this reading order:
+
+1. [**README.md**](README.md): project overview, main findings, and how to run the core pipeline.
+2. [**report.md**](report.md): paper-style narrative grounded in the committed experimental outputs.
+3. [**Runbook.md**](Runbook.md): end-to-end execution guide for rebuilding the corpus, rerunning experiments, and troubleshooting.
+4. [**Structure.md**](Structure.md): file-by-file map of the repository layout.
+5. [`results/`](results): archived experiment outputs used in the report.
+
+If you only want the shortest possible path:
+
+- To understand the research claim, read [**report.md**](report.md).
+- To reproduce the pipeline, follow [**Runbook.md**](Runbook.md).
+- To navigate the codebase, open [**Structure.md**](Structure.md).
 
 ### Research Questions
 
@@ -58,7 +75,7 @@ graph TB
         F --> G[Automated Consistency<br/>Grounding/Duplicates]
         G --> H[Human Annotation<br/>reviewer_cli.py]
         H --> I["IAA Check<br/>(Cohen's Kappa ≥ 0.75)"]
-        I --> J[350 QA Pairs]
+        I --> J[300 QA Pairs]
     end
 
     subgraph "Indexing"
@@ -154,7 +171,7 @@ uv run python experiments/run_phase1.py
 uv run jupyter notebook notebooks/04_phase1_results.ipynb
 ```
 
-> 📖 For the **complete step-by-step guide** with troubleshooting, see **[Runbook.md](Runbook.md)**.
+> 📖 For the complete step-by-step guide with troubleshooting, see [**Runbook.md**](Runbook.md). For the paper-style write-up of the committed results, see [**report.md**](report.md).
 
 ---
 
@@ -265,7 +282,7 @@ lc-vs-rag-mk-verdicts/
 │
 ├── experiments/
 │   ├── configs/
-│   │   ├── phase1_baseline.yaml          # Gemini 2.5 Flash, all 3 architectures, full 350 QA
+│   │   ├── phase1_baseline.yaml          # Gemini 2.5 Flash, all 3 architectures, full 300 QA
 │   │   ├── phase2_multimodel.yaml        # Gemini 2.5 Flash vs GPT-4o, 2×3 factorial
 │   │   ├── ablation.yaml                 # 6 Advanced RAG ablation conditions, 100 QA subset
 │   │   ├── chunking_comparison.yaml      # fixed-size vs section-boundary, 100 QA subset
@@ -360,7 +377,7 @@ lc-vs-rag-mk-verdicts/
 |:---|:---|
 | **Model** | Gemini 2.5 Flash (1M context window) |
 | **Conditions** | LC / Simple RAG / Advanced RAG |
-| **Dataset** | 350 QA pairs across 50 verdicts |
+| **Dataset** | 300 QA pairs across 50 verdicts |
 | **Temperature** | 0.0 |
 | **Max Output Tokens** | 512 |
 | **Judge** | Two-Model Pipeline (Gemini 3 Flash Preview + Gemini 2.0 Flash) |
@@ -389,8 +406,8 @@ Six progressive conditions isolating Advanced RAG components:
 | Experiment | Purpose | Dataset |
 |:---|:---|:---|
 | **NIAH** | "Lost in the middle" effect on legal docs | 30 deep-needle QA pairs |
-| **Length Sensitivity** | Performance vs document length (short/medium/long) | Full 350 QA pairs |
-| **Chunking Comparison** | Section-boundary vs fixed-size splitting | Full 350 QA pairs |
+| **Length Sensitivity** | Performance vs document length (short/medium/long) | Full 300 QA pairs |
+| **Chunking Comparison** | Section-boundary vs fixed-size splitting | Full 300 QA pairs |
 | **Knowledge Update** | Handling 3 new verdicts post-index | 3 hold-out verdicts |
 
 ---
@@ -536,6 +553,7 @@ Each QA pair in `qa_pairs_full.jsonl` follows this schema:
 
 | Document | Description |
 |:---|:---|
+| [**report.md**](report.md) | Publication-style research report grounded in the committed `results/` artifacts |
 | [**Runbook.md**](Runbook.md) | Complete step-by-step execution guide with troubleshooting |
 | [**Structure.md**](Structure.md) | Detailed architecture and file documentation |
 | `.env.example` | Environment variable template |

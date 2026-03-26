@@ -1,5 +1,14 @@
 # Project Structure
 
+## Documentation Map
+
+Read the project documents in this order, depending on your goal:
+
+- [README.md](README.md) for the project overview, main findings, and quickstart.
+- [report.md](report.md) for the publication-style research narrative grounded in the committed results.
+- [Runbook.md](Runbook.md) for the full reproduction workflow and troubleshooting.
+- [Structure.md](Structure.md) for the repository layout and codebase map.
+
 ```mermaid
 graph TD
     Root["VerdictBench-LCvsRAG/"]
