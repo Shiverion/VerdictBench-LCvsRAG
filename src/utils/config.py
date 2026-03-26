@@ -20,6 +20,9 @@ MODEL_PRICING: dict[str, float] = {
     "gemini-2.5-flash-preview-04-17": 0.15,
     "gpt-4o":                          2.50,
     "gpt-4o-mini":                     0.15,
+    "claude-opus-4.6":                 15.00,  # Elite tier pricing
+    "gpt-5.4":                        10.00,  # next-gen pricing
+    "gemini-3.1-pro":                  1.25,   # pro tier pricing
 }
 
 
@@ -47,9 +50,14 @@ class PathsConfig(BaseModel):
 class ModelConfig(BaseModel):
     phase1_model:    str = Field(default_factory=lambda: os.getenv("PHASE1_MODEL", "gemini-2.5-flash-preview-04-17"))
     phase2_model_a:  str = Field(default_factory=lambda: os.getenv("PHASE2_MODEL_A", "gemini-2.5-flash-preview-04-17"))
-    phase2_model_b:  str = Field(default_factory=lambda: os.getenv("PHASE2_MODEL_B", "gpt-4o"))
-    judge_model:     str = "gpt-4o"        # evaluator — always different from generation model
+    phase2_model_b:  str = Field(default_factory=lambda: os.getenv("PHASE2_MODEL_B", "gpt-4o-mini"))
+    judge_model:     str = "gemini-3-flash-preview"
+    judge_thinking_level: str = "none"
+    use_batch_api:   bool = True
     embedding_model: str = Field(default_factory=lambda: os.getenv("EMBEDDING_MODEL", "models/gemini-embedding-2-preview"))
+    claude_reviewer: str = Field(default_factory=lambda: os.getenv("CLAUDE_REVIEWER", "claude-opus-4.6"))
+    gpt_reviewer:    str = Field(default_factory=lambda: os.getenv("GPT_REVIEWER", "gpt-5.4"))
+    gemini_reviewer: str = Field(default_factory=lambda: os.getenv("GEMINI_REVIEWER", "gemini-3.1-pro"))
     reranker_model:  str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
     temperature:     float = 0.0
     max_output_tokens: int = 512
@@ -85,12 +93,32 @@ class SamplingConfig(BaseModel):
     qa_per_verdict:   int = 7
 
 
+class TokenEstimates(BaseModel):
+    gen_input_p95: int = 15_000
+    judge_input_p95: int = 1_500
+
+
+class BudgetConfig(BaseModel):
+    max_input_tokens:  int = 15_000_000
+    max_output_tokens: int = 750_000
+    max_cost_usd:      float = 3.50
+    max_cost_idr:      float = 55_000
+    warn_at_pct:       float = 0.80
+
+
 class Config(BaseModel):
     paths:    PathsConfig    = PathsConfig()
     models:   ModelConfig    = ModelConfig()
     rag:      RAGConfig      = RAGConfig()
     eval:     EvalConfig     = EvalConfig()
     sampling: SamplingConfig = SamplingConfig()
+    token_estimates: TokenEstimates = TokenEstimates()
+    budget:   BudgetConfig   = BudgetConfig()
+    keys:     dict[str, str | None] = {
+        "google_api_key":    os.getenv("GOOGLE_API_KEY"),
+        "openai_api_key":    os.getenv("OPENAI_API_KEY"),
+        "anthropic_api_key": os.getenv("ANTHROPIC_API_KEY"),
+    }
     model_pricing: dict[str, float] = MODEL_PRICING
 
     class Config:

@@ -1,5 +1,5 @@
 <p align="center">
-  <h1 align="center">⚖️ When Context is King: Benchmarking Long Context vs RAG on Indonesian Constitutional Court Verdicts</h1>
+  <h1 align="center">⚖️ When Context is King: Benchmarking Long Context vs RAG on VerdictBench-LCvsRAG</h1>
   <p align="center">
     <em>Do million-token context windows make retrieval obsolete? We put it to the test on 50 real Indonesian legal verdicts.</em>
   </p>
@@ -25,7 +25,7 @@ This repository contains the **full research pipeline** for an empirical study c
 1. **RQ1** — Does Long Context outperform RAG when the entire document fits within the context window?
 2. **RQ2** — Does the advantage of RAG increase as document length grows?
 3. **RQ3** — Which Advanced RAG components contribute most to faithfulness improvements?
-4. **RQ4** — How does the choice of LLM (Gemini vs GPT-4o) interact with architectural choice?
+4. **RQ4** — How does the choice of LLM (Flash 2.5 vs GPT-4o Mini) interact with architectural choice?
 
 ### Architectures Compared
 
@@ -34,6 +34,11 @@ This repository contains the **full research pipeline** for an empirical study c
 | **Long Context (LC)** | Full verdict injected into prompt | Up to 1M tokens (Gemini) |
 | **Simple RAG** | Fixed-size chunking + FAISS top-k retrieval | 512-token chunks, top-5 |
 | **Advanced RAG** | Query rewriting + hybrid search + reranking + metadata filtering | Multi-stage pipeline |
+
+### 🛠️ Quality Assurance
+To ensure maximum scientific validity, the dataset generation pipeline enforces strict validation:
+- **Human IAA (Cohen's Kappa)**: A 10% sample is independently annotated to ensure high agreement (targeting κ ≥ 0.75).
+- **Automated Consistency Checks**: Surgical AI scripts verify verbatim grounding and detect semantic duplications before human annotation.
 
 ---
 
@@ -50,9 +55,10 @@ graph TB
 
     subgraph "QA Dataset Construction"
         E --> F[LLM Draft Generation<br/>Gemini 2.5 Flash]
-        F --> G[Human Review<br/>reviewer_cli.py]
-        G --> H[IAA Check<br/>κ ≥ 0.75]
-        H --> I[350 QA Pairs]
+        F --> G[Automated Consistency<br/>Grounding/Duplicates]
+        G --> H[Human Annotation<br/>reviewer_cli.py]
+        H --> I["IAA Check<br/>(Cohen's Kappa ≥ 0.75)"]
+        I --> J[350 QA Pairs]
     end
 
     subgraph "Indexing"
@@ -62,14 +68,14 @@ graph TB
     end
 
     subgraph "Experiments"
-        I --> M[Phase 1: Single Model<br/>LC vs Simple vs Advanced]
-        I --> N[Phase 2: Multi-Model<br/>Gemini × GPT-4o]
-        I --> O[Ablation Study<br/>6 RAG Conditions]
-        I --> P[Additional<br/>NIAH, Length, Chunking]
+        J --> M[Phase 1: Single Model<br/>LC vs Simple vs Advanced]
+        J --> N[Phase 2: Multi-Model<br/>Gemini × GPT-4o-Mini]
+        J --> O[Ablation Study<br/>6 RAG Conditions]
+        J --> P[Additional<br/>NIAH, Length, Chunking]
     end
 
     subgraph "Evaluation"
-        M & N & O & P --> Q[Faithfulness<br/>GPT-4o Judge]
+        M & N & O & P --> Q[Faithfulness<br/>Two-Model Judge]
         Q --> R[BERTScore<br/>IndoBERT]
         R --> S[Statistical Tests<br/>Wilcoxon + Bootstrap CI]
         S --> T[11 Analysis Notebooks]
@@ -357,11 +363,11 @@ lc-vs-rag-mk-verdicts/
 | **Dataset** | 350 QA pairs across 50 verdicts |
 | **Temperature** | 0.0 |
 | **Max Output Tokens** | 512 |
-| **Judge** | GPT-4o (faithfulness evaluation) |
+| **Judge** | Two-Model Pipeline (Gemini 3 Flash Preview + Gemini 2.0 Flash) |
 
 ### Phase 2 — Multi-Model Factorial
 
-- **Models**: Gemini 2.5 Flash (1M context) × GPT-4o (128K context)
+- **Models**: Gemini 2.5 Flash (1M context) × GPT-4o Mini (128K context)
 - **Design**: 2×3 factorial
 - **Hypothesis (H₁)**: Larger context windows reduce retrieval dependency
 
@@ -393,7 +399,7 @@ Six progressive conditions isolating Advanced RAG components:
 
 | Metric | Scope | Method |
 |:---|:---|:---|
-| **Faithfulness** | All conditions | GPT-4o judge: claim decomposition → source grounding |
+| **Faithfulness** | All conditions | Two-model judge: `gemini-3-flash-preview` (reasoning) → `gemini-2.0-flash` (JSON extract) |
 | **Hallucination Rate** | All conditions | HR = 1 − Faithfulness; binary flag if HR > 0.20 |
 | **Legal Accuracy** | 10% spot-check | Human reviewer: 0 (wrong) / 1 (partial) / 2 (correct) |
 | **BERTScore F1** | All conditions | IndoBERT (`indolem/indobert-base-uncased`) |
@@ -456,10 +462,10 @@ All results are saved as JSONL — one record per QA pair with full metadata:
 | Corpus embedding (50 verdicts) | Gemini Embedding | Free |
 | QA draft generation | Gemini 2.5 Flash | ~$0.15 |
 | Phase 1 generation (350q × 3 cond) | Gemini 2.5 Flash | ~$0.50 |
-| Phase 1 faithfulness eval | GPT-4o | ~$3–5 |
-| Phase 2 generation (+ GPT-4o) | GPT-4o | ~$10–15 |
-| Ablation (100q × 6 cond) | Gemini + GPT-4o | ~$1–2 |
-| **Full pipeline total** | | **~$15–25** |
+| Phase 1 faithfulness eval | Two-model Gemini | ~$0.50 |
+| Phase 2 generation (+ GPT-4o-mini) | GPT-4o-mini | ~$1.50 |
+| Ablation (100q × 6 cond) | Gemini | ~$0.20 |
+| **Full pipeline total** | | **~$3.00** |
 
 ---
 
@@ -470,7 +476,7 @@ All results are saved as JSONL — one record per QA pair with full metadata:
 | **Language** | Python ≥ 3.10 |
 | **Package Manager** | [uv](https://github.com/astral-sh/uv) (with `hatchling` backend) |
 | **LLM Generation** | [`google-genai`](https://pypi.org/project/google-genai/) (Gemini 2.5 Flash) |
-| **LLM Evaluation** | [OpenAI API](https://platform.openai.com/) (GPT-4o) |
+| **LLM Evaluation** | [`google-genai`](https://pypi.org/project/google-genai/) (Gemini 3 Flash Preview / 2.0 Flash) |
 | **Embeddings** | Google Gemini Embedding API |
 | **Vector Store** | [FAISS](https://github.com/facebookresearch/faiss) (CPU) |
 | **Sparse Retrieval** | [rank-bm25](https://github.com/dorianbrown/rank_bm25) |
@@ -543,12 +549,12 @@ Each QA pair in `qa_pairs_full.jsonl` follows this schema:
 If you use this dataset or code in your research, please cite:
 
 ```bibtex
-@misc{iqbal2026lc_rag_mk,
+@misc{iqbal2026verdictbench_lcvsrag,
   author    = {Muhammad Iqbal Hilmy Izzulhaq},
-  title     = {Comparative Study of Long Context vs RAG Architectures
+  title     = {When Context is King: Benchmarking Long Context vs RAG
                on Indonesian Constitutional Court Verdicts},
   year      = {2026},
-  url       = {https://github.com/Shiverion/lc-vs-rag-mk-verdicts}
+  url       = {https://github.com/Shiverion/VerdictBench-LCvsRAG}
 }
 ```
 

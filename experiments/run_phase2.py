@@ -2,7 +2,7 @@
 Phase 2: Context Window Size Interaction
   - 2x3 factorial: Gemini 2.5 Flash (1M ctx) vs GPT-4o (128k ctx)
   - x LC / Simple RAG / Advanced RAG
-
+  - Full 300 QA pairs.
 Run:
   python experiments/run_phase2.py
   python experiments/run_phase2.py --model gemini_flash  # one model only
@@ -36,7 +36,7 @@ MODEL_CONFIGS = {
 }
 
 
-def main(model_key: str | None = None, evaluate: bool = True) -> None:
+def main(model_key: str | None = None, evaluate: bool = True, resume: bool = False) -> None:
     sample_meta = pd.read_csv(cfg.paths.sample_50) if cfg.paths.sample_50.exists() else None
     qa_path     = cfg.paths.qa_dir / "qa_pairs_full.jsonl"
 
@@ -63,6 +63,7 @@ def main(model_key: str | None = None, evaluate: bool = True) -> None:
                 results_dir=results_dir,
                 evaluate=evaluate,
                 sample_metadata=sample_meta,
+                resume=resume,
             )
 
     log.info("\nPhase 2 complete.")
@@ -73,5 +74,7 @@ if __name__ == "__main__":
     parser.add_argument("--model", choices=list(MODEL_CONFIGS.keys()),
                         default=None, help="Run a single model only")
     parser.add_argument("--no-eval", action="store_true")
+    parser.add_argument("--resume", action="store_true",
+                        help="Skip already-completed (non-error) question_ids")
     args = parser.parse_args()
-    main(model_key=args.model, evaluate=not args.no_eval)
+    main(model_key=args.model, evaluate=not args.no_eval, resume=args.resume)
