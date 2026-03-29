@@ -251,6 +251,8 @@ This interpretation is consistent with three empirical patterns in the artifacts
 2. Hybrid search further improves faithfulness, suggesting lexical cues remain important (Cormack et al., 2009).
 3. Needle-in-a-haystack performance strongly favors retrieval, which is exactly where prompt-wide attention should struggle most (Liu et al., 2023; Li et al., 2024).
 
+Notebook 07 strengthens this interpretation with a length-sensitive Phase 1 breakdown. Simple RAG remains comparatively stable across short, medium, and long verdicts (0.869, 0.859, and 0.803 mean faithfulness, respectively), whereas Long Context deteriorates sharply on long verdicts (0.448, 0.533, and 0.205). The same stratum also produces a token explosion for LC, from roughly 11.1k mean input tokens on short verdicts to 131.4k on long verdicts. In other words, document length does not merely increase LC cost. It changes the evidence-selection problem in a way that makes full-document prompting less faithful exactly where retrieval should be most valuable.
+
 ### 4.2 Why "More RAG" Does Not Automatically Help
 
 The ablation results show that additional retrieval components introduce failure modes of their own. The current query-rewrite step likely broadens or distorts the original information need. The reranker appears especially brittle, possibly because it is not adapted to Indonesian legal language and because it prunes aggressively enough to discard relevant chunks. Metadata filtering is mildly helpful, but only hybrid search produces a clear and substantial gain.

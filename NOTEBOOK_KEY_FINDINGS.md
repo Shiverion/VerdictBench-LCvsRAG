@@ -62,6 +62,24 @@ The Long Context result is not just lower quality. It is also less operationally
 Important implication:
 - Long-context prompting degrades exactly where it is supposed to help most, namely on the longest documents.
 
+Notebook 07 adds the missing stratified quality view behind that failure pattern. In Phase 1 faithfulness by verdict-length stratum:
+
+| Architecture | Short | Medium | Long |
+|:---|---:|---:|---:|
+| Simple RAG | **0.869** | **0.859** | **0.803** |
+| Advanced RAG | 0.765 | 0.796 | 0.721 |
+| Long Context | 0.448 | 0.533 | **0.205** |
+
+This is the more important interpretation of the length-sensitivity notebook:
+- **Simple RAG stays relatively stable** as verdict length increases.
+- **Long Context collapses in the long stratum**, where its mean faithfulness falls to **0.205**.
+- The LC drop is paired with a token explosion:
+  - short: **11.1k** mean input tokens
+  - medium: **23.4k**
+  - long: **131.4k**
+
+So the length-sensitive result is not merely that LC sometimes fails. It is that longer verdicts make LC both less reliable and less faithful, while retrieval-based systems remain comparatively robust.
+
 ## 4. Effect Sizes Confirm The Main Comparison
 
 Phase 2 significance is not only statistical; it is practically meaningful, especially against Long Context.
