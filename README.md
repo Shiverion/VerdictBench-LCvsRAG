@@ -1,17 +1,16 @@
-<p align="center">
-  <h1 align="center">⚖️ When Context is King: Benchmarking Long Context vs RAG on VerdictBench-LCvsRAG</h1>
-  <p align="center">
-    <em>Do million-token context windows make retrieval obsolete? We put it to the test on 50 real Indonesian legal verdicts.</em>
-  </p>
-  <p align="center">
-    <a href="#-quickstart">Quickstart</a> •
-    <a href="#-start-here">Start Here</a> •
-    <a href="#-experimental-design">Experiments</a> •
-    <a href="#-evaluation-metrics">Metrics</a> •
-    <a href="#-results--analysis">Results</a> •
-    <a href="#-citation">Citation</a>
-  </p>
-</p>
+# When Context Is Not Enough: Long Context vs Retrieval-Augmented Generation on Indonesian Constitutional Court Verdicts
+
+*Do million-token context windows make retrieval obsolete? This repository tests that question on 50 real Indonesian Constitutional Court verdicts.*
+
+| Section | Link |
+|:---|:---|
+| Final Report | [**report.md**](report.md) |
+| Latest Aggregates | [**report_totals.txt**](report_totals.txt) |
+| Raw Results | [**results/**](results) |
+| Runbook | [**Runbook.md**](Runbook.md) |
+| Code Structure | [**Structure.md**](Structure.md) |
+
+Quick links: [Quickstart](#-quickstart) | [Experiments](#-experimental-design) | [Metrics](#-evaluation-metrics) | [Results](#-results--analysis) | [Citation](#-citation)
 
 ---
 
@@ -54,7 +53,7 @@ If you only want the shortest possible path:
 
 ### 🛠️ Quality Assurance
 To ensure maximum scientific validity, the dataset generation pipeline enforces strict validation:
-- **Human IAA (Cohen's Kappa)**: A 10% sample is independently annotated to ensure high agreement (targeting κ ≥ 0.75).
+- **Human IAA (Agreement + Kappa)**: A 10% overlap sample is independently annotated and reported with observed agreement, Cohen's kappa, and label distribution.
 - **Automated Consistency Checks**: Surgical AI scripts verify verbatim grounding and detect semantic duplications before human annotation.
 
 ---
@@ -74,7 +73,7 @@ graph TB
         E --> F[LLM Draft Generation<br/>Gemini 2.5 Flash]
         F --> G[Automated Consistency<br/>Grounding/Duplicates]
         G --> H[Human Annotation<br/>reviewer_cli.py]
-        H --> I["IAA Check<br/>(Cohen's Kappa ≥ 0.75)"]
+        H --> I["IAA Check<br/>(Agreement + Kappa)"]
         I --> J[300 QA Pairs]
     end
 
@@ -408,7 +407,7 @@ Six progressive conditions isolating Advanced RAG components:
 | **NIAH** | "Lost in the middle" effect on legal docs | 30 deep-needle QA pairs |
 | **Length Sensitivity** | Performance vs document length (short/medium/long) | Full 300 QA pairs |
 | **Chunking Comparison** | Section-boundary vs fixed-size splitting | Full 300 QA pairs |
-| **Knowledge Update** | Handling 3 new verdicts post-index | 3 hold-out verdicts |
+| **Knowledge Update (Exploratory)** | Small pilot on 3 new verdicts post-index | 3 hold-out verdicts |
 
 ---
 
@@ -429,7 +428,7 @@ Six progressive conditions isolating Advanced RAG components:
 
 ## 📈 Results & Analysis
 
-All results are saved as JSONL — one record per QA pair with full metadata:
+The latest aggregated metrics are available in [**report_totals.txt**](report_totals.txt). Full experimental records are stored in the [**results/**](results) directory. Results are saved as JSONL — one record per QA pair with full metadata:
 
 ```json
 {
@@ -553,6 +552,7 @@ Each QA pair in `qa_pairs_full.jsonl` follows this schema:
 
 | Document | Description |
 |:---|:---|
+| [**ANNOTATION_APP.md**](ANNOTATION_APP.md) | Web annotation system for 2-annotator overlap review and Cohen's kappa |
 | [**report.md**](report.md) | Publication-style research report grounded in the committed `results/` artifacts |
 | [**Runbook.md**](Runbook.md) | Complete step-by-step execution guide with troubleshooting |
 | [**Structure.md**](Structure.md) | Detailed architecture and file documentation |
@@ -567,7 +567,7 @@ If you use this dataset or code in your research, please cite:
 ```bibtex
 @misc{iqbal2026verdictbench_lcvsrag,
   author    = {Muhammad Iqbal Hilmy Izzulhaq},
-  title     = {When Context is King: Benchmarking Long Context vs RAG
+  title     = {When Context Is Not Enough: Long Context vs Retrieval-Augmented Generation
                on Indonesian Constitutional Court Verdicts},
   year      = {2026},
   url       = {https://github.com/Shiverion/VerdictBench-LCvsRAG}
