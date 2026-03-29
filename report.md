@@ -237,6 +237,14 @@ The needle-in-a-haystack experiment evaluates queries whose gold evidence appear
 
 The NIAH results reinforce the main finding rather than weakening it. Simple RAG is markedly better at locating and grounding deep evidence. Long Context remains competitive only on superficial similarity metrics and raw runtime, not on factual success.
 
+**Table 6. Phase 1 faithfulness by verdict-length stratum.**
+
+| Architecture | Short | Medium | Long |
+|:---|---:|---:|---:|
+| Simple RAG | **0.869** | **0.859** | **0.803** |
+| Advanced RAG | 0.765 | 0.796 | 0.721 |
+| Long Context | 0.448 | 0.533 | **0.205** |
+
 ---
 
 ## 4. Discussion
@@ -267,7 +275,7 @@ For publication purposes, this means faithfulness should remain the lead metric,
 
 ### 4.4 Operational Reliability
 
-The Phase 1 Long Context run exposes a practical deployment concern: very large prompts are not only expensive, but also more vulnerable to quota and throughput constraints. The 51 unscored LC records in Phase 1 are not a theoretical issue; they are documented in the repository artifacts as quota-exhaustion failures. Even when Long Context is later rerun successfully in Phase 2, the Phase 1 instability remains relevant because production systems must handle repeated workloads, not just ideal reruns.
+The Phase 1 Long Context run exposes a practical deployment concern: very large prompts are not only expensive, but also more vulnerable to quota and throughput constraints. The 51 unscored LC records in Phase 1 are not a theoretical issue; they are documented in the repository artifacts as quota-exhaustion failures. Notably, all 51 failures occur in the long-verdict stratum, the same stratum where LC faithfulness collapses to 0.205 on successful queries. Even when Long Context is later rerun successfully in Phase 2, the Phase 1 instability remains relevant because production systems must handle repeated workloads, not just ideal reruns.
 
 ---
 
@@ -302,6 +310,7 @@ The main quantitative claims in this report are grounded in the following reposi
 - `results/phase2/gpt4o/*/results_clean_bs.jsonl`
 - `results/ablation/*/results_clean_bs.jsonl`
 - `results/additional/niah/niah_summary.csv`
+- `notebooks/07_length_sensitivity.ipynb` (derived from the Phase 1 result files above plus `data/metadata/sample_50.csv`)
 - `data/metadata/sample_50.csv`
 - `data/qa_dataset/iaa_existing_overlap/kappa_summary.json`
 - `report_totals.txt`
