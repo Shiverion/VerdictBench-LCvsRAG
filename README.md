@@ -5,6 +5,7 @@
 | Section | Link |
 |:---|:---|
 | Final Report | [**report.md**](report.md) |
+| Notebook Findings | [**NOTEBOOK_KEY_FINDINGS.md**](NOTEBOOK_KEY_FINDINGS.md) |
 | Latest Aggregates | [**report_totals.txt**](report_totals.txt) |
 | Raw Results | [**results/**](results) |
 | Runbook | [**Runbook.md**](Runbook.md) |
@@ -26,13 +27,15 @@ If you are new to the repository, use this reading order:
 
 1. [**README.md**](README.md): project overview, main findings, and how to run the core pipeline.
 2. [**report.md**](report.md): paper-style narrative grounded in the committed experimental outputs.
-3. [**Runbook.md**](Runbook.md): end-to-end execution guide for rebuilding the corpus, rerunning experiments, and troubleshooting.
-4. [**Structure.md**](Structure.md): file-by-file map of the repository layout.
-5. [`results/`](results): archived experiment outputs used in the report.
+3. [**NOTEBOOK_KEY_FINDINGS.md**](NOTEBOOK_KEY_FINDINGS.md): shortest findings-only summary of the executed notebook outputs.
+4. [**Runbook.md**](Runbook.md): end-to-end execution guide for rebuilding the corpus, rerunning experiments, and troubleshooting.
+5. [**Structure.md**](Structure.md): file-by-file map of the repository layout.
+6. [`results/`](results): archived experiment outputs used in the report.
 
 If you only want the shortest possible path:
 
 - To understand the research claim, read [**report.md**](report.md).
+- To skim only the highest-signal results, read [**NOTEBOOK_KEY_FINDINGS.md**](NOTEBOOK_KEY_FINDINGS.md).
 - To reproduce the pipeline, follow [**Runbook.md**](Runbook.md).
 - To navigate the codebase, open [**Structure.md**](Structure.md).
 
