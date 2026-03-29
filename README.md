@@ -21,6 +21,10 @@ Quick links: [Quickstart](#-quickstart) | [Experiments](#-experimental-design) |
 
 This repository contains the **full research pipeline** for an empirical study comparing three LLM-based QA architectures on a corpus of 50 Indonesian Constitutional Court (*Mahkamah Konstitusi*, MK) verdicts.
 
+![Phase 2 faithfulness comparison](figures/phase2_faithfulness.png)
+
+*Figure. Across both Gemini 2.5 Flash and GPT-4o Mini, the architecture ranking stays stable: Simple RAG performs best, Advanced RAG is second, and Long Context trails both.*
+
 ## 📍 Start Here
 
 If you are new to the repository, use this reading order:

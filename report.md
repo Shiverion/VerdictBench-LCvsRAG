@@ -129,6 +129,10 @@ The Phase 1 result is directionally strong: Simple RAG outperforms both alternat
 
 The failure pattern is also highly structured rather than random. Joining the 51 unscored LC records to the benchmark strata in `data/metadata/sample_50.csv` shows that all 51 occur in the `long` stratum. That corresponds to a 56.7% failure rate for long-verdict queries (51/90) and a 0% failure rate for both short and medium verdicts (0/210 combined). This makes the Phase 1 LC breakdown substantively informative: the architecture degrades exactly where long-context prompting is supposed to be most advantageous.
 
+![Phase 1 Long Context failure rate by stratum](figures/phase1_lc_failure_by_stratum.png)
+
+*Figure 1. All Phase 1 Long Context failures are concentrated in the long-verdict stratum.*
+
 Even with that caveat, the signal is clear. On completed queries, Simple RAG exceeds Long Context by 0.394 absolute faithfulness points. Restricting the comparison to the 249 questions with scorable outputs in both systems, Simple RAG also significantly outperforms Long Context under a paired one-sided Wilcoxon signed-rank test (`p = 3.29e-21`). The cost difference is also substantial: Simple RAG processes the 300-query benchmark for roughly $0.31, whereas the incomplete Long Context run already consumes $4.48.
 
 ### 3.2 Phase 2 Multi-Model Comparison
@@ -165,6 +169,10 @@ Second, Long Context again posts the highest BERTScore while remaining the least
 
 Third, the main Phase 2 comparisons are statistically and practically well supported. Paired one-sided Wilcoxon signed-rank tests on per-question faithfulness scores show that Simple RAG significantly outperforms Advanced RAG for both Gemini 2.5 Flash (`p = 0.00154`) and GPT-4o Mini (`p = 0.00176`), and it significantly outperforms Long Context for both Gemini 2.5 Flash (`p = 3.09e-12`) and GPT-4o Mini (`p = 2.43e-17`). Table 2A shows the corresponding effect sizes. The Simple-RAG-versus-Advanced-RAG gains are small but consistent (`d = 0.220` for Gemini 2.5 Flash; `d = 0.206` for GPT-4o Mini), whereas the Simple-RAG-versus-Long-Context gains are medium to large (`d = 0.582` and `d = 0.803`). The central ranking is therefore supported not only by significance tests but also by practically meaningful separation, especially against Long Context.
 
+![Phase 2 faithfulness comparison across both models](figures/phase2_faithfulness.png)
+
+*Figure 2. Phase 2 preserves the same architecture ordering across both model families: Simple RAG first, Advanced RAG second, Long Context last.*
+
 ### 3.3 Cost and Latency
 
 The repository artifacts show that the most faithful systems are also the most cost-efficient. Table 3 consolidates the Phase 2 cost evidence.
@@ -183,6 +191,10 @@ The repository artifacts show that the most faithful systems are also the most c
 For same-model comparisons, the trade-off is straightforward. Under Gemini 2.5 Flash, Simple RAG is about 24.8x cheaper than Long Context while being substantially more faithful (0.840 vs 0.616). Under GPT-4o Mini, Simple RAG is about 16.3x cheaper than Long Context and again more faithful (0.857 vs 0.524).
 
 Across all six Phase 2 cells, the cheapest condition is GPT-4o Mini + Advanced RAG at $0.0438 total cost, and the most expensive is Gemini 2.5 Flash + Long Context at $7.7740. That is an approximately 177x cost spread across tested configurations. Importantly, the expensive configuration is not the best-performing one.
+
+![Cost-faithfulness frontier](figures/cost_faithfulness_frontier.png)
+
+*Figure 3. Long Context is dominated on both quality and cost; Simple RAG sits on the favorable frontier in both model families.*
 
 ### 3.4 Ablation Study
 
@@ -206,6 +218,10 @@ First, hybrid BM25+dense search (Cormack et al., 2009) is highly beneficial on t
 Second, query rewriting is harmful in its current form. It reduces faithfulness from 0.815 to 0.767 while also increasing latency.
 
 Third, reranking is the most damaging step tested. Once reranking is added, mean faithfulness drops to 0.725, the lowest score in the ablation sequence. A plausible explanation is model mismatch: the reranker used in the pipeline is a general-domain `ms-marco` MiniLM cross-encoder (Nogueira and Cho, 2019; Reimers and Gurevych, 2019) trained primarily on English retrieval signals rather than Bahasa Indonesia legal prose. In this setting, it likely overweights superficial query-passage similarity and underweights domain-specific legal cues such as article references, formal court terminology, and section-local procedural language. Because reranking also prunes the candidate set aggressively, a modest ranking error can become an unrecoverable evidence loss.
+
+![Ablation faithfulness comparison](figures/ablation_faithfulness.png)
+
+*Figure 4. Hybrid search is the strongest positive component, while reranking is the most harmful addition in the tested Advanced RAG stack.*
 
 ### 3.5 Needle-in-a-Haystack Evaluation
 
