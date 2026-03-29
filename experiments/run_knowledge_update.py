@@ -35,10 +35,7 @@ log = get_logger(__name__)
 
 # The 3 new verdicts must be placed in data/raw/txt/ and data/raw/json/
 # before running this experiment. They are NOT in the original sample_50.
-NEW_VERDICT_IDS = [
-    # Populated after selecting 3 hold-out verdicts from the 887 corpus
-    # e.g. "45_PUU-XX_2022", "12_PHPU-XXI_2023", "7_SKLN-XIX_2021"
-]
+NEW_VERDICT_IDS = ["100_PUU-XVIII_2020", "100_PUU-XXI_2023", "100_PUU-XX_2022"]
 
 
 def measure_update_latency(

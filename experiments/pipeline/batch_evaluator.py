@@ -41,7 +41,21 @@ def add_bertscore(results_path: Path, out_path: Path | None = None) -> pd.DataFr
     predictions = [r.get("answer", "")     for r in records]
     references  = [r.get("gold_answer", "") for r in records]
 
-    scores = evaluate_bertscore(predictions, references)
+    try:
+        # Try batch mode first (high speed)
+        scores = evaluate_bertscore(predictions, references)
+    except Exception as e:
+        log.warning(f"Batch BERTScore failed ({e}), falling back to resilient loop...")
+        from src.evaluation.bertscore_eval import evaluate_single_bertscore
+        scores = []
+        for i, (p, r) in enumerate(zip(predictions, references)):
+            try:
+                scores.append(evaluate_single_bertscore(p, r))
+            except Exception as j_e:
+                log.warning(f"Record {i+1} failed: {j_e}")
+                scores.append(0.0)
+            if (i+1) % 50 == 0:
+                print(f"    ... {i+1}/{len(records)}", flush=True)
 
     for record, score in zip(records, scores):
         record["bertscore_f1"] = score

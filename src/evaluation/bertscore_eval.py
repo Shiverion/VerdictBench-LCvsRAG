@@ -11,13 +11,28 @@ Models tried (in order of preference):
 
 from __future__ import annotations
 
+import os
 from functools import lru_cache
 
-from bert_score import score as bert_score_fn
+os.environ["TRANSFORMERS_OFFLINE"] = "1"
+os.environ["HF_DATASETS_OFFLINE"] = "1"
 
 from src.utils.logger import get_logger
-
 log = get_logger(__name__)
+
+from transformers import AutoTokenizer
+orig_from_pretrained = AutoTokenizer.from_pretrained
+
+def patched_from_pretrained(*args, **kwargs):
+    tokenizer = orig_from_pretrained(*args, **kwargs)
+    if hasattr(tokenizer, "model_max_length") and tokenizer.model_max_length > 1_000_000:
+        log.info(f"Patching insane model_max_length: {tokenizer.model_max_length} -> 512")
+        tokenizer.model_max_length = 512
+    return tokenizer
+
+AutoTokenizer.from_pretrained = patched_from_pretrained
+
+from bert_score import score as bert_score_fn
 
 # Indonesian BERT model for legal text evaluation
 _PRIMARY_MODEL   = "indolem/indobert-base-uncased"
@@ -66,6 +81,7 @@ def evaluate_bertscore(
         cands=predictions,
         refs=references,
         model_type=model_type,
+        num_layers=12,
         lang="id",
         batch_size=batch_size,
         verbose=False,

@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: verdictbench-annotation-api
+    runtime: python
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn src.annotation.api:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    disk:
+      name: annotation-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.11
+      - key: ANNOTATION_DB_PATH
+        value: /var/data/annotation_app.sqlite3
+      - key: ANNOTATION_ALLOWED_ORIGINS
+        sync: false
+
+  - type: static
+    name: verdictbench-annotation-ui
+    rootDir: annotation-ui
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_BASE
+        sync: false
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

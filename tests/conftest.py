@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+import sqlite3
+
 import pytest
+
+from src.annotation.db import init_db
 
 
 SAMPLE_VERDICT_TEXT = """[1.1] Yang mengadili perkara konstitusi pada tingkat pertama dan terakhir,
@@ -53,3 +57,14 @@ def sample_chunks():
         Chunk(text="Pemohon memiliki kedudukan hukum yang sah.", verdict_id="v1", chunk_idx=1, chunk_size=512, n_chars=43, section="pertimbangan"),
         Chunk(text="Menolak permohonan Pemohon untuk seluruhnya.", verdict_id="v1", chunk_idx=2, chunk_size=512, n_chars=44, section="amar_putusan"),
     ]
+
+
+@pytest.fixture
+def sqlite_connection():
+    conn = sqlite3.connect(":memory:")
+    conn.row_factory = sqlite3.Row
+    init_db(conn)
+    try:
+        yield conn
+    finally:
+        conn.close()

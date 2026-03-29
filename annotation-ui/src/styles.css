@@ -1,0 +1,280 @@
+:root {
+  color-scheme: light;
+  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+  --bg: #f4efe7;
+  --paper: #fffdf8;
+  --ink: #1f1b17;
+  --muted: #6b665d;
+  --line: rgba(31, 27, 23, 0.12);
+  --accent: #a53f2b;
+  --accent-soft: #f3d7c8;
+  --accept: #2d6a4f;
+  --modify: #c57b10;
+  --reject: #9f2a2a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at top left, rgba(165, 63, 43, 0.16), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(197, 123, 16, 0.18), transparent 24%),
+    var(--bg);
+  color: var(--ink);
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+.annotator-shell {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 32px 20px 56px;
+}
+
+.hero {
+  margin-bottom: 20px;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.hero h1 {
+  margin: 0;
+  font-size: clamp(2.4rem, 4vw, 4rem);
+  line-height: 0.95;
+}
+
+.lede {
+  max-width: 760px;
+  color: var(--muted);
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+.content-stack {
+  display: grid;
+  gap: 22px;
+}
+
+.panel {
+  background: rgba(255, 253, 248, 0.9);
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  padding: 28px;
+  box-shadow: 0 20px 60px rgba(31, 27, 23, 0.08);
+}
+
+.section-heading {
+  margin-bottom: 18px;
+}
+
+.section-heading h2 {
+  margin: 0 0 6px;
+  font-size: 1.6rem;
+}
+
+.section-heading p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.start-row,
+.meta-grid,
+.status-row,
+.summary-grid,
+.admin-actions {
+  display: grid;
+  gap: 14px;
+}
+
+.start-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.annotation-form,
+.bootstrap-form {
+  display: grid;
+  gap: 18px;
+}
+
+.meta-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.meta-grid div,
+.example-card,
+.stat-card,
+.table-card {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  padding: 18px;
+}
+
+.meta-grid span,
+.stat-card span,
+label span {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+input,
+textarea {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: #ffffff;
+}
+
+.primary,
+.status-pill,
+.panel button {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 12px 18px;
+  background: var(--paper);
+  color: var(--ink);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.primary,
+.status-pill.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+
+.status-row {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.example-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.example-badge {
+  display: inline-block;
+  margin-bottom: 12px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.badge-accepted {
+  background: rgba(45, 106, 79, 0.14);
+  color: var(--accept);
+}
+
+.badge-modified {
+  background: rgba(197, 123, 16, 0.14);
+  color: var(--modify);
+}
+
+.badge-rejected {
+  background: rgba(159, 42, 42, 0.14);
+  color: var(--reject);
+}
+
+.example-card h3 {
+  margin: 0 0 10px;
+  font-size: 1.1rem;
+}
+
+.example-card p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.example-answer {
+  margin-bottom: 12px !important;
+  color: var(--ink) !important;
+  font-weight: 600;
+}
+
+.summary-grid {
+  margin-top: 22px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.stat-card strong {
+  font-size: 2rem;
+}
+
+.table-card table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table-card th,
+.table-card td {
+  text-align: left;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.checkbox {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.checkbox input {
+  width: auto;
+}
+
+.message {
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: var(--accent-soft);
+}
+
+.banner {
+  margin-bottom: 16px;
+}
+
+.empty-state {
+  padding: 34px;
+  text-align: center;
+  color: var(--muted);
+  border: 1px dashed var(--line);
+  border-radius: 20px;
+}
+
+code {
+  font-family: "IBM Plex Mono", Consolas, monospace;
+}
+
+@media (max-width: 900px) {
+  .start-row,
+  .meta-grid,
+  .status-row,
+  .example-grid,
+  .summary-grid,
+  .admin-actions {
+    grid-template-columns: 1fr;
+  }
+}

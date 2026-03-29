@@ -10,7 +10,7 @@
 
 The recent expansion of large language model (LLM) context windows raises a practical question for document-grounded question answering: if an entire source document fits into the prompt, is retrieval-augmented generation (RAG) still necessary? This report evaluates that question on 50 Indonesian Constitutional Court (*Mahkamah Konstitusi*, MK) verdicts and 300 human-reviewed question-answer pairs.
 
-Simple RAG is the most reliable architecture in every complete comparison. In Phase 1, it reaches mean faithfulness 0.845 over 300 queries, whereas Long Context (LC) reaches 0.451 over 249 scorable queries; the remaining 51 LC failures are quota-exhaustion errors, all concentrated in the long-verdict stratum. In Phase 2, the ranking remains stable for both Gemini Flash and GPT-4o Mini: Simple RAG > Advanced RAG > Long Context. Under Gemini Flash, Simple RAG attains 0.840 faithfulness versus 0.616 for LC while costing $0.31 versus $7.77 over 300 queries.
+Simple RAG is the most reliable architecture in every complete comparison. In Phase 1, it reaches mean faithfulness 0.845 over 300 queries, whereas Long Context (LC) reaches 0.451 over 249 scorable queries; the remaining 51 LC failures are quota-exhaustion errors, all concentrated in the long-verdict stratum. In Phase 2, the ranking remains stable for both Gemini 2.5 Flash and GPT-4o Mini: Simple RAG > Advanced RAG > Long Context. Under Gemini 2.5 Flash, Simple RAG attains 0.840 faithfulness versus 0.616 for LC while costing $0.31 versus $7.77 over 300 queries.
 
 Effect sizes support the same conclusion. For the main Phase 2 comparisons, Cohen's *d* ranges from 0.206 to 0.220 for Simple RAG versus Advanced RAG and from 0.582 to 0.803 for Simple RAG versus Long Context. The ablation study shows that hybrid search is the most beneficial component (0.907 faithfulness), whereas query rewriting and cross-encoder reranking reduce quality. On this legal QA benchmark, targeted retrieval remains more faithful, cheaper, and operationally more robust than full-document prompt injection.
 
@@ -36,7 +36,7 @@ The study addresses four questions:
 ### 1.2 Main Contributions
 
 1. A benchmark centered on 50 Indonesian Constitutional Court verdicts and 300 reviewed QA pairs.
-2. A controlled empirical comparison of Long Context, Simple RAG, and Advanced RAG across Gemini Flash and GPT-4o Mini.
+2. A controlled empirical comparison of Long Context, Simple RAG, and Advanced RAG across Gemini 2.5 Flash and GPT-4o Mini.
 3. A component-level ablation showing that hybrid search helps, while query rewriting and reranking degrade performance on this corpus.
 4. An evidence-based cost, latency, and operational-reliability analysis using the exact run artifacts committed under `results/`.
 
@@ -115,7 +115,7 @@ Faithfulness is the primary metric in this report because the benchmark targets 
 
 ### 3.1 Phase 1 Baseline
 
-The Phase 1 baseline compares all three architectures using Gemini Flash over the 300-question benchmark. Table 1 reports the aggregate values from the committed Phase 1 outputs.
+The Phase 1 baseline compares all three architectures using Gemini 2.5 Flash (`models/gemini-2.5-flash`) over the 300-question benchmark. Table 1 reports the aggregate values from the committed Phase 1 outputs.
 
 **Table 1. Phase 1 baseline from `results/phase1/*`.**
 
@@ -139,9 +139,9 @@ Phase 2 provides the cleaner architectural comparison because all six cells are 
 
 | Model | Architecture | Queries | Mean faithfulness | 95% CI | Mean BERTScore F1 | Mean hallucination rate | Zero-faithfulness cases |
 |:---|:---|---:|---:|:---:|---:|---:|---:|
-| Gemini Flash | Simple RAG | 300 | **0.840** | [0.803, 0.877] | 0.507 | **0.160** | **32** |
-| Gemini Flash | Advanced RAG | 300 | 0.762 | [0.718, 0.805] | 0.489 | 0.238 | 50 |
-| Gemini Flash | Long Context | 300 | 0.616 | [0.565, 0.666] | **0.548** | 0.384 | 85 |
+| Gemini 2.5 Flash | Simple RAG | 300 | **0.840** | [0.803, 0.877] | 0.507 | **0.160** | **32** |
+| Gemini 2.5 Flash | Advanced RAG | 300 | 0.762 | [0.718, 0.805] | 0.489 | 0.238 | 50 |
+| Gemini 2.5 Flash | Long Context | 300 | 0.616 | [0.565, 0.666] | **0.548** | 0.384 | 85 |
 | GPT-4o Mini | Simple RAG | 300 | **0.857** | [0.816, 0.893] | 0.681 | **0.143** | **39** |
 | GPT-4o Mini | Advanced RAG | 300 | 0.780 | [0.733, 0.825] | 0.647 | 0.220 | 61 |
 | GPT-4o Mini | Long Context | 300 | 0.524 | [0.469, 0.578] | **0.728** | 0.476 | 130 |
@@ -150,9 +150,9 @@ Phase 2 provides the cleaner architectural comparison because all six cells are 
 
 | Model | Comparison | Mean difference | Cohen's *d* | 95% bootstrap CI |
 |:---|:---|---:|---:|:---:|
-| Gemini Flash | Simple RAG vs Advanced RAG | 0.078 | 0.220 | [0.065, 0.379] |
-| Gemini Flash | Simple RAG vs Long Context | 0.224 | 0.582 | [0.411, 0.753] |
-| Gemini Flash | Advanced RAG vs Long Context | 0.146 | 0.356 | [0.193, 0.525] |
+| Gemini 2.5 Flash | Simple RAG vs Advanced RAG | 0.078 | 0.220 | [0.065, 0.379] |
+| Gemini 2.5 Flash | Simple RAG vs Long Context | 0.224 | 0.582 | [0.411, 0.753] |
+| Gemini 2.5 Flash | Advanced RAG vs Long Context | 0.146 | 0.356 | [0.193, 0.525] |
 | GPT-4o Mini | Simple RAG vs Advanced RAG | 0.077 | 0.206 | [0.049, 0.361] |
 | GPT-4o Mini | Simple RAG vs Long Context | 0.333 | 0.803 | [0.629, 0.988] |
 | GPT-4o Mini | Advanced RAG vs Long Context | 0.256 | 0.578 | [0.417, 0.750] |
@@ -161,9 +161,9 @@ Three observations matter most.
 
 First, the architecture ordering is stable across both models: Simple RAG performs best, Advanced RAG is second, and Long Context is worst. This matters more than the exact means because it shows that the result is not a one-off artifact of a single run configuration.
 
-Second, Long Context again posts the highest BERTScore while remaining the least faithful. For GPT-4o Mini, Long Context reaches the highest BERTScore (0.728) but the lowest faithfulness (0.524). For Gemini Flash, Long Context similarly leads on BERTScore (0.548) but trails on faithfulness (0.616). On this benchmark, semantic-overlap metrics alone would therefore overstate LC quality.
+Second, Long Context again posts the highest BERTScore while remaining the least faithful. For GPT-4o Mini, Long Context reaches the highest BERTScore (0.728) but the lowest faithfulness (0.524). For Gemini 2.5 Flash, Long Context similarly leads on BERTScore (0.548) but trails on faithfulness (0.616). On this benchmark, semantic-overlap metrics alone would therefore overstate LC quality.
 
-Third, the main Phase 2 comparisons are statistically and practically well supported. Paired one-sided Wilcoxon signed-rank tests on per-question faithfulness scores show that Simple RAG significantly outperforms Advanced RAG for both Gemini Flash (`p = 0.00154`) and GPT-4o Mini (`p = 0.00176`), and it significantly outperforms Long Context for both Gemini Flash (`p = 3.09e-12`) and GPT-4o Mini (`p = 2.43e-17`). Table 2A shows the corresponding effect sizes. The Simple-RAG-versus-Advanced-RAG gains are small but consistent (`d = 0.220` for Gemini Flash; `d = 0.206` for GPT-4o Mini), whereas the Simple-RAG-versus-Long-Context gains are medium to large (`d = 0.582` and `d = 0.803`). The central ranking is therefore supported not only by significance tests but also by practically meaningful separation, especially against Long Context.
+Third, the main Phase 2 comparisons are statistically and practically well supported. Paired one-sided Wilcoxon signed-rank tests on per-question faithfulness scores show that Simple RAG significantly outperforms Advanced RAG for both Gemini 2.5 Flash (`p = 0.00154`) and GPT-4o Mini (`p = 0.00176`), and it significantly outperforms Long Context for both Gemini 2.5 Flash (`p = 3.09e-12`) and GPT-4o Mini (`p = 2.43e-17`). Table 2A shows the corresponding effect sizes. The Simple-RAG-versus-Advanced-RAG gains are small but consistent (`d = 0.220` for Gemini 2.5 Flash; `d = 0.206` for GPT-4o Mini), whereas the Simple-RAG-versus-Long-Context gains are medium to large (`d = 0.582` and `d = 0.803`). The central ranking is therefore supported not only by significance tests but also by practically meaningful separation, especially against Long Context.
 
 ### 3.3 Cost and Latency
 
@@ -173,16 +173,16 @@ The repository artifacts show that the most faithful systems are also the most c
 
 | Model | Architecture | Mean input tokens | Mean cost/query (USD) | Total cost over 300 queries (USD) | Total latency |
 |:---|:---|---:|---:|---:|---:|
-| Gemini Flash | Simple RAG | 1,990 | 0.001044 | 0.3131 | 18.1 min |
-| Gemini Flash | Advanced RAG | 1,324 | 0.000710 | 0.2130 | 31.5 min |
-| Gemini Flash | Long Context | 51,719 | 0.025913 | 7.7740 | 18.2 min |
+| Gemini 2.5 Flash | Simple RAG | 1,990 | 0.001044 | 0.3131 | 18.1 min |
+| Gemini 2.5 Flash | Advanced RAG | 1,324 | 0.000710 | 0.2130 | 31.5 min |
+| Gemini 2.5 Flash | Long Context | 51,719 | 0.025913 | 7.7740 | 18.2 min |
 | GPT-4o Mini | Simple RAG | 2,332 | 0.000210 | 0.0630 | 23.6 min |
 | GPT-4o Mini | Advanced RAG | 1,550 | **0.000146** | **0.0438** | 38.3 min |
 | GPT-4o Mini | Long Context | 45,051 | 0.003421 | 1.0262 | 69.6 min |
 
-For same-model comparisons, the trade-off is straightforward. Under Gemini Flash, Simple RAG is about 24.8x cheaper than Long Context while being substantially more faithful (0.840 vs 0.616). Under GPT-4o Mini, Simple RAG is about 16.3x cheaper than Long Context and again more faithful (0.857 vs 0.524).
+For same-model comparisons, the trade-off is straightforward. Under Gemini 2.5 Flash, Simple RAG is about 24.8x cheaper than Long Context while being substantially more faithful (0.840 vs 0.616). Under GPT-4o Mini, Simple RAG is about 16.3x cheaper than Long Context and again more faithful (0.857 vs 0.524).
 
-Across all six Phase 2 cells, the cheapest condition is GPT-4o Mini + Advanced RAG at $0.0438 total cost, and the most expensive is Gemini Flash + Long Context at $7.7740. That is an approximately 177x cost spread across tested configurations. Importantly, the expensive configuration is not the best-performing one.
+Across all six Phase 2 cells, the cheapest condition is GPT-4o Mini + Advanced RAG at $0.0438 total cost, and the most expensive is Gemini 2.5 Flash + Long Context at $7.7740. That is an approximately 177x cost spread across tested configurations. Importantly, the expensive configuration is not the best-performing one.
 
 ### 3.4 Ablation Study
 
@@ -231,7 +231,7 @@ The most plausible explanation is not that Long Context cannot "see" the answer,
 
 This interpretation is consistent with three empirical patterns in the artifacts:
 
-1. Simple RAG beats Long Context on both Gemini Flash and GPT-4o Mini.
+1. Simple RAG beats Long Context on both Gemini 2.5 Flash and GPT-4o Mini.
 2. Hybrid search further improves faithfulness, suggesting lexical cues remain important (Cormack et al., 2009).
 3. Needle-in-a-haystack performance strongly favors retrieval, which is exactly where prompt-wide attention should struggle most (Liu et al., 2023; Li et al., 2024).
 
@@ -267,7 +267,7 @@ Several limitations should be stated explicitly.
 
 ## 6. Conclusion
 
-The repository evidence supports a clear conclusion: on Indonesian Constitutional Court verdicts, expanding the context window does not eliminate the need for retrieval. Across the complete Phase 2 runs, Simple RAG is the best architecture on faithfulness for both Gemini Flash and GPT-4o Mini. Across the ablation study, hybrid search is the strongest individual enhancement, while query rewriting and reranking reduce quality. Under deep-evidence queries, retrieval remains strongest where full-document prompting should have been most competitive.
+The repository evidence supports a clear conclusion: on Indonesian Constitutional Court verdicts, expanding the context window does not eliminate the need for retrieval. Across the complete Phase 2 runs, Simple RAG is the best architecture on faithfulness for both Gemini 2.5 Flash and GPT-4o Mini. Across the ablation study, hybrid search is the strongest individual enhancement, while query rewriting and reranking reduce quality. Under deep-evidence queries, retrieval remains strongest where full-document prompting should have been most competitive.
 
 For factual legal QA, the practical recommendation is therefore not to choose between retrieval and context capacity in the abstract. It is to use context capacity selectively, after retrieval has already concentrated the relevant evidence. In this project, that design consistently yields the best balance of faithfulness, cost, and operational robustness.
 

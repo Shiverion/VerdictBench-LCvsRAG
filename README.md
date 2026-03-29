@@ -84,8 +84,8 @@ graph TB
     end
 
     subgraph "Experiments"
-        J --> M[Phase 1: Single Model<br/>LC vs Simple vs Advanced]
-        J --> N[Phase 2: Multi-Model<br/>Gemini × GPT-4o-Mini]
+        J --> M[Phase 1: Single Model<br/>Gemini 2.5 Flash]
+        J --> N[Phase 2: Multi-Model<br/>Gemini 2.5 Flash × GPT-4o Mini]
         J --> O[Ablation Study<br/>6 RAG Conditions]
         J --> P[Additional<br/>NIAH, Length, Chunking]
     end
@@ -375,6 +375,7 @@ lc-vs-rag-mk-verdicts/
 | Parameter | Setting |
 |:---|:---|
 | **Model** | Gemini 2.5 Flash (1M context window) |
+| **Model ID** | `models/gemini-2.5-flash` |
 | **Conditions** | LC / Simple RAG / Advanced RAG |
 | **Dataset** | 300 QA pairs across 50 verdicts |
 | **Temperature** | 0.0 |
@@ -383,7 +384,7 @@ lc-vs-rag-mk-verdicts/
 
 ### Phase 2 — Multi-Model Factorial
 
-- **Models**: Gemini 2.5 Flash (1M context) × GPT-4o Mini (128K context)
+- **Models**: Gemini 2.5 Flash (`models/gemini-2.5-flash`, 1M context) × GPT-4o Mini (128K context)
 - **Design**: 2×3 factorial
 - **Hypothesis (H₁)**: Larger context windows reduce retrieval dependency
 
