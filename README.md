@@ -461,6 +461,8 @@ The latest aggregated metrics are available in [**report_totals.txt**](report_to
 }
 ```
 
+A Phase 1 human legal-accuracy spot-check was also completed on a 0/1/2 rubric. On the filtered sample of non-obviously-truncated answers, mean scores were `1.73` for Simple RAG, `1.47` for Advanced RAG, and `1.80` for Long Context. This result is reported in the paper with an explicit caveat: because the review workflow excluded truncated outputs, it favors Long Context's surviving completions and should not be read as a full-system ranking.
+
 ### Analysis Notebooks
 
 | # | Notebook | Key Outputs |

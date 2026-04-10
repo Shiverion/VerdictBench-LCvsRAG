@@ -1,57 +1,28 @@
 # Final To-Do
 
-This file is now a **pre-submission paper checklist**. The major paper-facing items except the human legal validation pass have been completed.
+This file is now a **post-close submission status note**. The main paper-facing items from the final push have been completed.
 
-## Remaining Submission Blocker
+## Final Status
 
 ### 1. Human Legal Accuracy Spot-Check
 
-**Status:** not done  
-**Why it matters:** the paper still relies on an automated faithfulness judge without a reported human legal validation pass. For a legal NLP venue, this is the main remaining methodological gap.  
-**Time:** about 3 to 4 hours  
-**Effort:** high but straightforward
+**Status:** done  
+**Outcome:** a 30-item-per-condition human legal-accuracy spot-check was completed on Phase 1 outputs using the 0/1/2 rubric.  
+**Observed means on filtered, non-obviously-truncated outputs:** Long Context `1.80`, Simple RAG `1.73`, Advanced RAG `1.47`.
 
-**What to do**
+**Interpretation**
 
-- Complete the human legal accuracy spot-check on a 10% sample.
-- Summarize the results in the paper.
-- Relate the human 0/1/2 ratings to the automated faithfulness signal.
+- This human spot-check should **not** be read as a full condition-level ranking.
+- The review workflow excluded obviously truncated outputs, which favors Long Context's surviving completions.
+- In the full Phase 1 run, Long Context still incurred `51` unscored failures, all in the long-verdict stratum.
+- The paper therefore reports the human review as evidence that surviving LC answers can be legally strong, while the full-run architecture comparison remains better reflected by faithfulness, reliability, and cost.
 
-**Recommended scope**
+**Artifacts**
 
-- Review 10% of generated answers for each Phase 1 condition.
-- That is about 30 answers per condition.
-- Total human review load: about 90 answers.
-
-**Run**
-
-```bash
-uv run python -m src.evaluation.legal_accuracy_cli \
-  --results "results/phase1/lc/run_*.jsonl"
-
-uv run python -m src.evaluation.legal_accuracy_cli \
-  --results "results/phase1/simple_rag/run_*.jsonl"
-
-uv run python -m src.evaluation.legal_accuracy_cli \
-  --results "results/phase1/advanced_rag/run_*.jsonl"
-```
-
-**Scoring rubric**
-
-- `0` = factually wrong or unsupported
-- `1` = partially correct
-- `2` = legally accurate and grounded
-
-**How to report it**
-
-- Add a small table with mean legal accuracy per Phase 1 condition.
-- Compare that ranking against the automated faithfulness ranking.
-- If the ranking is consistent (`Simple RAG > Advanced RAG > Long Context`), state that this supports the validity of the automated judge.
-
-**Done when**
-
-- The report contains a short subsection or table summarizing human legal review.
-- The automated judge is no longer presented without human validation.
+- `results/phase1/simple_rag/*_human.jsonl`
+- `results/phase1/advanced_rag/*_human.jsonl`
+- `results/phase1/lc/*_human.jsonl`
+- `results/legal_accuracy_summary.md`
 
 ---
 
@@ -65,6 +36,7 @@ These items were pending previously and are now done in the paper/docs:
 4. **BERTScore coverage confirmation.** The report now states that all scorable records in the main Phase 1, Phase 2, and ablation tables have populated `bertscore_f1` values.
 5. **Abstract trim.** The abstract in `report.md` has been reduced and no longer leans on the underpowered knowledge-update pilot.
 6. **Title unification.** `README.md`, `report.md`, and the citation title now use the same paper title.
+7. **Human legal spot-check.** The paper now includes the filtered-sample human legal-accuracy result with the required selection-bias caveat.
 
 ---
 
@@ -73,4 +45,4 @@ These items were pending previously and are now done in the paper/docs:
 These are not blocking after the current pass, but they would still improve the repo:
 
 - Clean the remaining README formatting artifacts near the top section if you want a fully polished public landing page.
-- Add a small human-legal-validation sentence to `README.md` after the spot-check is complete, so the repo overview matches the paper.
+- If you want a revision-round upgrade, rerun the human spot-check without filtered-sample bias by separately tracking truncated completions as zero-quality outputs.

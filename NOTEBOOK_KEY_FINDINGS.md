@@ -155,10 +155,14 @@ The strongest single practical recommendation from the notebooks is:
 - add **metadata filtering** and especially **hybrid search**
 - avoid assuming that a large context window makes retrieval unnecessary
 
-## 9. Remaining Gap
+## 9. Human Review Caveat
 
-One submission-relevant item is still outside the completed notebook evidence:
+The final paper now includes a Phase 1 human legal-accuracy spot-check on a 0/1/2 scale. On a filtered sample of non-obviously-truncated outputs, mean scores were:
 
-- **Human legal accuracy spot-check**
+| Architecture | Mean legal accuracy |
+|:---|---:|
+| Long Context | **1.80** |
+| Simple RAG | 1.73 |
+| Advanced RAG | 1.47 |
 
-The automated faithfulness results are already strong, but a manual legal-accuracy validation pass would further strengthen the paper for peer review.
+This should not be read as a direct full-system ranking. The review workflow excluded obviously truncated outputs, which favors Long Context's surviving completions. The full-run architecture comparison is therefore still better represented by the benchmark-wide faithfulness, reliability, and cost evidence summarized above.
