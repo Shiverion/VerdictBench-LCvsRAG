@@ -1,4 +1,14 @@
-# When Context Is Not Enough: Long Context vs Retrieval-Augmented Generation on Indonesian Constitutional Court Verdicts
+# VerdictBench: Long Context vs RAG on Indonesian Constitutional Court Verdicts
+
+[![Paper](https://img.shields.io/badge/Paper-Zenodo-blue)](https://doi.org/10.5281/zenodo.20086806)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20086806.svg)](https://doi.org/10.5281/zenodo.20086806)
+[![Code](https://img.shields.io/badge/Code-GitHub-green)](https://github.com/Shiverion/VerdictBench-LCvsRAG)
+
+**Paper:** "When Context Is Not Enough: Retrieval Outperforms Full-Document Prompting on Indonesian Constitutional Court Verdicts"
+
+**Preprint:** https://doi.org/10.5281/zenodo.20086806
+
+Submitted to AACL-IJCNLP 2026.
 
 *Do million-token context windows make retrieval obsolete? This repository tests that question on 50 real Indonesian Constitutional Court verdicts.*
 
@@ -575,12 +585,13 @@ Each QA pair in `qa_pairs_full.jsonl` follows this schema:
 If you use this dataset or code in your research, please cite:
 
 ```bibtex
-@misc{iqbal2026verdictbench_lcvsrag,
-  author    = {Muhammad Iqbal Hilmy Izzulhaq},
-  title     = {When Context Is Not Enough: Long Context vs Retrieval-Augmented Generation
-               on Indonesian Constitutional Court Verdicts},
-  year      = {2026},
-  url       = {https://github.com/Shiverion/VerdictBench-LCvsRAG}
+@misc{izzulhaq2025context,
+  title={When Context Is Not Enough: Retrieval Outperforms Full-Document Prompting on Indonesian Constitutional Court Verdicts},
+  author={Izzulhaq, Muhammad Iqbal Hilmy},
+  year={2025},
+  doi={10.5281/zenodo.20086806},
+  publisher={Zenodo},
+  url={https://doi.org/10.5281/zenodo.20086806}
 }
 ```
 
