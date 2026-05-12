@@ -1,27 +1,37 @@
 # VerdictBench: Long Context vs RAG on Indonesian Constitutional Court Verdicts
 
-[![Paper](https://img.shields.io/badge/Paper-Zenodo-blue)](https://doi.org/10.5281/zenodo.20086806)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20086806.svg)](https://doi.org/10.5281/zenodo.20086806)
-[![Code](https://img.shields.io/badge/Code-GitHub-green)](https://github.com/Shiverion/VerdictBench-LCvsRAG)
+[![OpenReview](https://img.shields.io/badge/OpenReview-1Z6OUt0T6Q-b31b1b)](https://openreview.net/forum?id=1Z6OUt0T6Q)
+[![Zenodo](https://zenodo.org/badge/DOI/10.5281/zenodo.20086806.svg)](https://doi.org/10.5281/zenodo.20086806)
+[![arXiv](https://img.shields.io/badge/arXiv-Pending-orange)]()
 
-**Paper:** "When Context Is Not Enough: Retrieval Outperforms Full-Document Prompting on Indonesian Constitutional Court Verdicts"
+> **"When Context Is Not Enough: Retrieval Outperforms Full-Document Prompting on Indonesian Constitutional Court Verdicts"**
 
-**Preprint:** https://doi.org/10.5281/zenodo.20086806
+**Preprints:**
+- 📄 **OpenReview**: https://openreview.net/forum?id=1Z6OUt0T6Q
+- 📄 **Zenodo**: https://doi.org/10.5281/zenodo.20086806
+- 📄 **arXiv**: Pending endorsement (cs.CL)
 
-Submitted to AACL-IJCNLP 2026.
+**Status:** Submitted to AACL-IJCNLP 2026
 
-*Do million-token context windows make retrieval obsolete? This repository tests that question on 50 real Indonesian Constitutional Court verdicts.*
+## Quick Links
+- [📊 Results & Figures](#-results--analysis)
+- [📦 Dataset](data/qa_dataset/)
+- [🔧 Installation](#-quickstart)
+- [📖 Paper (OpenReview)](https://openreview.net/forum?id=1Z6OUt0T6Q)
 
-| Section | Link |
-|:---|:---|
-| Final Report | [**report.md**](report.md) |
-| Notebook Findings | [**NOTEBOOK_KEY_FINDINGS.md**](NOTEBOOK_KEY_FINDINGS.md) |
-| Latest Aggregates | [**report_totals.txt**](report_totals.txt) |
-| Raw Results | [**results/**](results) |
-| Runbook | [**Runbook.md**](Runbook.md) |
-| Code Structure | [**Structure.md**](Structure.md) |
+---
 
-Quick links: [Quickstart](#-quickstart) | [Experiments](#-experimental-design) | [Metrics](#-evaluation-metrics) | [Results](#-results--analysis) | [Citation](#-citation)
+## Abstract
+
+The recent expansion of large language model (LLM) context windows raises a practical question for document-grounded question answering: if an entire source document fits into the prompt, is retrieval-augmented generation (RAG) still necessary?
+
+We evaluate this on 50 Indonesian Constitutional Court verdicts and 300 human-reviewed QA pairs. **Simple RAG consistently outperforms Long Context** (0.857 vs 0.524 faithfulness), with LC collapsing on long documents (0.205 faithfulness).
+
+**Key findings:**
+- ✅ Simple RAG > Advanced RAG > Long Context (stable across Gemini & GPT-4o)
+- ✅ Hybrid BM25+dense search: +9.2pp faithfulness
+- ❌ Cross-encoder reranking: -9.0pp (language mismatch)
+- ❌ Long Context fails exactly where it should win (long documents)
 
 ---
 
@@ -589,9 +599,7 @@ If you use this dataset or code in your research, please cite:
   title={When Context Is Not Enough: Retrieval Outperforms Full-Document Prompting on Indonesian Constitutional Court Verdicts},
   author={Izzulhaq, Muhammad Iqbal Hilmy},
   year={2025},
-  doi={10.5281/zenodo.20086806},
-  publisher={Zenodo},
-  url={https://doi.org/10.5281/zenodo.20086806}
+  url={https://openreview.net/forum?id=1Z6OUt0T6Q}
 }
 ```
 
