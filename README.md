@@ -25,13 +25,16 @@
 
 The recent expansion of large language model (LLM) context windows raises a practical question for document-grounded question answering: if an entire source document fits into the prompt, is retrieval-augmented generation (RAG) still necessary?
 
-We evaluate this on 50 Indonesian Constitutional Court verdicts and 300 human-reviewed QA pairs. **Simple RAG consistently outperforms Long Context** (0.857 vs 0.524 faithfulness), with LC collapsing on long documents (0.205 faithfulness).
+We evaluate this on 50 Indonesian Constitutional Court verdicts and 300 human-reviewed QA pairs using an oracle gold-evidence faithfulness metric. **Long Context and Simple RAG are statistically indistinguishable in faithfulness** (d=0.008–0.017, p>0.43), but LC fails to produce any response on 57% of long-document queries — its real limitation is operational, not qualitative.
 
 **Key findings:**
-- ✅ Simple RAG > Advanced RAG > Long Context (stable across Gemini & GPT-4o)
-- ✅ Hybrid BM25+dense search: +9.2pp faithfulness
-- ❌ Cross-encoder reranking: -9.0pp (language mismatch)
-- ❌ Long Context fails exactly where it should win (long documents)
+- ✅ LC faithfulness ≈ Simple RAG when LC answers (not statistically significant)
+- ✅ LC faithfulness *increases* with document length (0.578 → 0.606 → 0.628 short→long, scored only)
+- ❌ LC refuses to answer 57% of long-document queries (operational failure, not quality collapse)
+- ❌ Cross-encoder reranking hurts faithfulness (language mismatch on Indonesian legal text)
+- ❌ RAG augmentations reduce oracle faithfulness vs. simple baseline
+
+> **Note:** An earlier version reported LC faithfulness of 0.524 (Phase 1) via a measurement bug — the judge evaluated answers against a 500-char preview rather than the full generation context. See [CORRECTION_NOTE.md](CORRECTION_NOTE.md) for details.
 
 ---
 
@@ -43,23 +46,23 @@ This repository contains the **full research pipeline** for an empirical study c
 
 ![Phase 2 faithfulness comparison](figures/phase2_faithfulness.png)
 
-*Figure. Across both Gemini 2.5 Flash and GPT-4o Mini, the architecture ranking stays stable: Simple RAG performs best, Advanced RAG is second, and Long Context trails both.*
+*Figure. Across both Gemini 2.5 Flash and GPT-4o Mini, oracle faithfulness (gold evidence) shows LC ≈ Simple RAG (d=0.008–0.017, n.s.); Advanced RAG trails both.*
 
 ## 📍 Start Here
 
 If you are new to the repository, use this reading order:
 
 1. [**README.md**](README.md): project overview, main findings, and how to run the core pipeline.
-2. [**report.md**](report.md): paper-style narrative grounded in the committed experimental outputs.
-3. [**NOTEBOOK_KEY_FINDINGS.md**](NOTEBOOK_KEY_FINDINGS.md): shortest findings-only summary of the executed notebook outputs.
+2. [**Paper.md**](Paper.md): corrected publication-style paper with updated faithfulness results.
+3. [**CORRECTION_NOTE.md**](CORRECTION_NOTE.md): documents the faithfulness evaluation bug and the corrected statistics.
 4. [**Runbook.md**](Runbook.md): end-to-end execution guide for rebuilding the corpus, rerunning experiments, and troubleshooting.
 5. [**Structure.md**](Structure.md): file-by-file map of the repository layout.
-6. [`results/`](results): archived experiment outputs used in the report.
+6. [`results/`](results): archived experiment outputs; [`results_corrected/`](results_corrected): gold-evidence re-evaluation outputs.
 
 If you only want the shortest possible path:
 
-- To understand the research claim, read [**report.md**](report.md).
-- To skim only the highest-signal results, read [**NOTEBOOK_KEY_FINDINGS.md**](NOTEBOOK_KEY_FINDINGS.md).
+- To understand the research claim, read [**Paper.md**](Paper.md).
+- To see what changed from the original evaluation, read [**CORRECTION_NOTE.md**](CORRECTION_NOTE.md).
 - To reproduce the pipeline, follow [**Runbook.md**](Runbook.md).
 - To navigate the codebase, open [**Structure.md**](Structure.md).
 
@@ -197,7 +200,7 @@ uv run python experiments/run_phase1.py
 uv run jupyter notebook notebooks/04_phase1_results.ipynb
 ```
 
-> 📖 For the complete step-by-step guide with troubleshooting, see [**Runbook.md**](Runbook.md). For the paper-style write-up of the committed results, see [**report.md**](report.md).
+> 📖 For the complete step-by-step guide with troubleshooting, see [**Runbook.md**](Runbook.md). For the paper-style write-up of the committed results, see [**Paper.md**](Paper.md).
 
 ---
 
@@ -443,7 +446,7 @@ Six progressive conditions isolating Advanced RAG components:
 
 | Metric | Scope | Method |
 |:---|:---|:---|
-| **Faithfulness** | All conditions | Two-model judge: `gemini-3-flash-preview` (reasoning) → `gemini-2.0-flash` (JSON extract) |
+| **Faithfulness** | All conditions | Two-model judge: `gemini-3-flash-preview` (reasoning) → `gemini-2.5-flash-lite` (JSON extract) |
 | **Hallucination Rate** | All conditions | HR = 1 − Faithfulness; binary flag if HR > 0.20 |
 | **Legal Accuracy** | 10% spot-check | Human reviewer: 0 (wrong) / 1 (partial) / 2 (correct) |
 | **BERTScore F1** | All conditions | IndoBERT (`indolem/indobert-base-uncased`) |
@@ -456,7 +459,7 @@ Six progressive conditions isolating Advanced RAG components:
 
 ## 📈 Results & Analysis
 
-The latest aggregated metrics are available in [**report_totals.txt**](report_totals.txt). Full experimental records are stored in the [**results/**](results) directory. Results are saved as JSONL — one record per QA pair with full metadata:
+Full experimental records are stored in the [**results/**](results) directory (original Phase 1 outputs) and [**results_corrected/**](results_corrected) (gold-evidence re-evaluation outputs). Results are saved as JSONL — one record per QA pair with full metadata:
 
 ```json
 {
@@ -582,8 +585,9 @@ Each QA pair in `qa_pairs_full.jsonl` follows this schema:
 
 | Document | Description |
 |:---|:---|
+| [**Paper.md**](Paper.md) | Corrected publication-style paper with updated faithfulness results (gold-evidence metric) |
+| [**CORRECTION_NOTE.md**](CORRECTION_NOTE.md) | Faithfulness evaluation bug report: what was wrong, corrected tables, impact analysis |
 | [**ANNOTATION_APP.md**](ANNOTATION_APP.md) | Web annotation system for 2-annotator overlap review and Cohen's kappa |
-| [**report.md**](report.md) | Publication-style research report grounded in the committed `results/` artifacts |
 | [**Runbook.md**](Runbook.md) | Complete step-by-step execution guide with troubleshooting |
 | [**Structure.md**](Structure.md) | Detailed architecture and file documentation |
 | `.env.example` | Environment variable template |

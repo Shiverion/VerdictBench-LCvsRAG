@@ -5,7 +5,8 @@
 Read the project documents in this order, depending on your goal:
 
 - [README.md](README.md) for the project overview, main findings, and quickstart.
-- [report.md](report.md) for the publication-style research narrative grounded in the committed results.
+- [Paper.md](Paper.md) for the corrected publication-style paper with updated faithfulness results.
+- [CORRECTION_NOTE.md](CORRECTION_NOTE.md) for the faithfulness evaluation bug report and corrected statistics.
 - [Runbook.md](Runbook.md) for the full reproduction workflow and troubleshooting.
 - [Structure.md](Structure.md) for the repository layout and codebase map.
 
@@ -64,6 +65,10 @@ graph TD
 
 ### 📂 Root Directory
 - `README.md` — Project overview and quickstart.
+- `Paper.md` — Corrected publication-style paper with updated faithfulness numbers.
+- `CORRECTION_NOTE.md` — Documents the faithfulness evaluation bug and corrected statistics.
+- `PHASE_II_PLAN.md` — Experimental design and phase framing for Phase II work.
+- `LC_FAITHFULNESS_CORRECTION_PLAN.md` — Stage-by-stage tracking of the faithfulness correction pipeline.
 - `LICENSE` — MIT License.
 - `.env.example` — API keys template.
 - `Runbook.md` — Detailed execution guide.
@@ -95,7 +100,11 @@ Systematic run configurations.
 - `build_corpus.sh`, `build_index.sh`, `run_all_experiments.sh`.
 
 ### 📂 results/
-- Output data per condition (JSONL).
+- Output data per condition (JSONL) — original Phase 1 experimental outputs.
+
+### 📂 results_corrected/
+- Gold-evidence faithfulness re-evaluation outputs (Stage 2 oracle metric, 18 condition files, 3,339 records).
+- Gitignored subdirs: `logs/`, `full_lc_faithfulness/` (Stage 4, incomplete), smoke test artifacts.
 
 ### 📂 tests/
 - Full pytest test suite.

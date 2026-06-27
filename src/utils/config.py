@@ -7,12 +7,11 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 from pydantic import BaseModel, Field
 
-load_dotenv()
-
 ROOT = Path(__file__).resolve().parents[2]
+load_dotenv(find_dotenv() or str(ROOT / ".env"), override=True)
 
 
 # ── Model pricing ($ per 1M input tokens) ─────────────────────────────────────

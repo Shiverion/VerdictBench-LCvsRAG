@@ -1,3 +1,7 @@
+> **⚠ DEPRECATED** — This file contains the original analysis with a known faithfulness evaluation bug.
+> LC faithfulness scores here were evaluated against a 500-char truncated preview rather than the full generation context.
+> Use **[Paper.md](Paper.md)** for the corrected analysis, and **[CORRECTION_NOTE.md](CORRECTION_NOTE.md)** for details on the bug.
+
 # When Context Is Not Enough: Long Context vs Retrieval-Augmented Generation on Indonesian Constitutional Court Verdicts
 
 **Muhammad Iqbal Hilmy Izzulhaq**
