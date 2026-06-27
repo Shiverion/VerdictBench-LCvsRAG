@@ -7,9 +7,9 @@ import pandas as pd
 import seaborn as sns
 
 from notebooks.notebook_utils import (
-    load_ablation_results,
+    load_ablation_goldfaith,
     load_phase1_results,
-    load_phase2_results,
+    load_phase2_goldfaith,
     load_sample,
     phase1_failure_by_stratum,
     set_plot_style,
@@ -28,7 +28,7 @@ def save(fig: plt.Figure, name: str) -> None:
 
 
 def export_phase2_faithfulness() -> None:
-    _, summary = load_phase2_results()
+    _, summary = load_phase2_goldfaith()
     plot_df = summary.copy()
     plot_df[["ci_low", "ci_high"]] = pd.DataFrame(plot_df["faithfulness_ci"].tolist(), index=plot_df.index)
     plot_df["err_low"] = plot_df["mean_faithfulness"] - plot_df["ci_low"]
@@ -50,7 +50,7 @@ def export_phase2_faithfulness() -> None:
     ax.set_ylim(0, 1.0)
     ax.set_xlabel("")
     ax.set_ylabel("Mean faithfulness")
-    ax.set_title("Phase 2: Retrieval remains strongest across both model families")
+    ax.set_title("Phase 2: LC ≈ Simple RAG > Advanced RAG (gold-evidence faithfulness)")
 
     patches = ax.patches
     for i, (_, row) in enumerate(plot_df.sort_values(["architecture", "model_family"], key=lambda s: s.map({v: k for k, v in enumerate(order + hue_order)})).iterrows()):
@@ -103,7 +103,7 @@ def export_phase1_failures() -> None:
 
 
 def export_ablation() -> None:
-    _, summary = load_ablation_results()
+    _, summary = load_ablation_goldfaith()
     order = [
         "Baseline Simple RAG",
         "+ Query Rewrite",
@@ -127,7 +127,7 @@ def export_ablation() -> None:
     ax.set_ylim(0, 1.0)
     ax.set_xlabel("")
     ax.set_ylabel("Mean faithfulness")
-    ax.set_title("Ablation: hybrid search helps most, reranking hurts most")
+    ax.set_title("Ablation: Baseline Simple RAG is strongest; every augmentation reduces oracle faithfulness")
     ax.tick_params(axis="x", rotation=20)
     for patch in ax.patches:
         ax.text(
@@ -142,7 +142,7 @@ def export_ablation() -> None:
 
 
 def export_cost_frontier() -> None:
-    _, summary = load_phase2_results()
+    _, summary = load_phase2_goldfaith()
     palette = {
         "Simple RAG": "#2ca02c",
         "Advanced RAG": "#ff7f0e",
@@ -189,7 +189,7 @@ def export_cost_frontier() -> None:
 
     ax.set_xlabel("Mean cost per query (USD)")
     ax.set_ylabel("Mean faithfulness")
-    ax.set_title("Cost frontier: Long Context is dominated on both quality and cost")
+    ax.set_title("Cost frontier: LC and Simple RAG achieve equivalent faithfulness at very different costs")
     ax.set_xscale("log")
 
     # Small in-figure key for compact labels.

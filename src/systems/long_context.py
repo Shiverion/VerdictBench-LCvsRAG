@@ -128,10 +128,13 @@ class LongContextSystem(QASystem):
             verdict_id=verdict_id,
             answer=answer,
             retrieved_chunks=[],
-            context_used=text[:500] + "...",  # truncated for logging
+            context_used=text,
             condition=self.condition_name,
             model=self.model,
             input_tokens=input_tokens,
             cost_usd=cost_usd,
             latency_s=latency_s,
+            extra={
+                "context_preview": text[:500] + ("..." if len(text) > 500 else ""),
+            },
         )

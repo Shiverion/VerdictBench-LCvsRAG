@@ -132,6 +132,18 @@ def test_query_no_retrieved_chunks_for_lc(lc_system):
     assert result.retrieved_chunks == []
 
 
+def test_query_context_used_is_generation_context(lc_system, sample_text):
+    """LC evaluation context must be the generated-from context, not a preview."""
+    with patch.object(lc_system, "_call_llm", return_value="Jawaban."):
+        result = lc_system.query("Q?", "test_verdict_001")
+
+    assert result.context_used == sample_text
+    assert result.context_used != sample_text[:500] + "..."
+    assert result.extra["context_preview"] == sample_text[:500] + (
+        "..." if len(sample_text) > 500 else ""
+    )
+
+
 def test_query_result_to_dict_is_serializable(lc_system):
     """QAResult.to_dict() must be JSON-serializable."""
     import json

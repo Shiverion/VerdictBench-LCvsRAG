@@ -1,7 +1,7 @@
 # Faithfulness Evaluation Correction Note
 
-**Prepared:** 2026-06-27  
-**Affects:** Paper.md — all faithfulness and hallucination_rate figures  
+**Prepared:** 2026-06-27
+**Affects:** Paper.md — all faithfulness and hallucination_rate figures
 **Root cause:** `long_context.py:131` stored a 503-char logging preview in `context_used`
 instead of the full generation context. The experiment runner passed `context_used` to
 `evaluate_faithfulness`, so all LC faithfulness scores were evaluated against the first
@@ -64,11 +64,13 @@ regardless of what each system actually retrieved or injected.
 | GPT-4o Mini | Advanced RAG | 0.4756 | 0.5244 | -0.3044 |
 | GPT-4o Mini | LC | 0.5750 | 0.4250 | -0.0510 |
 
-**Ranking change:** Under gold_evidence, LC leads Simple RAG in Phase 2 (both model
-families). The original Phase 2 ranking (Simple RAG > Advanced RAG > LC) **reverses to
-LC > Simple RAG > Advanced RAG**. This reversal is genuine: the original LC numbers were
-suppressed by ~0.05 pts from the bug, while RAG numbers declined ~0.28-0.31 pts because
-gold_evidence is a stricter oracle than retrieved-chunk faithfulness.
+**Ranking change:** Under gold_evidence, LC is numerically above Simple RAG in Phase 2
+for both model families, but the LC-vs-Simple-RAG effect sizes are negligible and not
+statistically significant. The corrected Phase 2 interpretation is therefore
+**LC ~= Simple RAG > Advanced RAG**, not the original
+Simple RAG > Advanced RAG > LC ranking. The original LC numbers were suppressed by the
+bug, while RAG numbers declined because gold_evidence is a stricter oracle than
+retrieved-chunk faithfulness.
 
 ---
 
@@ -129,20 +131,23 @@ The poor long-verdict performance is entirely **operational**, not qualitative:
 
 ## 6. NIAH Results
 
-NIAH accuracy is derived from `legal_accuracy` (human evaluation, 0/1/2 scale), not from
-faithfulness. The accuracy figures are unaffected by the faithfulness bug.
+The originally published NIAH "accuracy" was not a human legal-accuracy label. It was
+computed by `experiments/run_niah.py` as a threshold over the original faithfulness score:
+`faithfulness >= 0.7`. Because that source faithfulness score was affected by the LC
+evaluation bug, the NIAH threshold-success values must be recomputed from
+gold_evidence_faithfulness.
 
-| System | NIAH Accuracy | Faithfulness (original) | Faithfulness (gold_evidence) |
-|---|---:|---:|---:|
-| Simple RAG | **0.8333** | 0.9056 | 0.4889 |
-| Advanced RAG | 0.7667 | 0.8167 | 0.4667 |
-| LC | 0.5000 | 0.6833 | **0.5778** |
+| System | Original threshold success | Faithfulness (original) | Faithfulness (gold_evidence) | Corrected threshold success |
+|---|---:|---:|---:|---:|
+| Simple RAG | **0.8333** | 0.9056 | 0.4889 | 0.3000 |
+| Advanced RAG | 0.7667 | 0.8167 | 0.4667 | 0.3333 |
+| LC | 0.5000 | 0.6833 | **0.5778** | **0.4000** |
 
-Under gold_evidence, LC leads NIAH faithfulness (0.578 vs 0.489 for Simple RAG). The
-original NIAH faithfulness was also bug-affected for LC: the 0.6833 was evaluated against
-the first 503 chars, not the needle location.
-
-NIAH accuracy finding (**Simple RAG 0.833 vs LC 0.500**) remains valid and unchanged.
+Under gold_evidence, LC leads NIAH faithfulness (0.578 vs 0.489 for Simple RAG) and
+corrected threshold success (12/30 vs 9/30 for Simple RAG). The original NIAH retrieval
+advantage is therefore not valid as an independent corrected finding. A separate
+exact-answer or retrieval-success metric would be needed to test the lost-in-the-middle
+hypothesis directly.
 
 ---
 
@@ -174,7 +179,8 @@ The following findings are unaffected by the faithfulness bug correction:
 - **Latency**: All latency figures unchanged
 - **BERTScore**: Computed independently, unchanged
 - **Legal accuracy spot-check**: Human-evaluated, unchanged
-- **NIAH accuracy**: Legal_accuracy based, unchanged
+- **NIAH original threshold-success values**: must be treated as superseded, because they
+  were derived from the original faithfulness score
 - **Operational failure rate**: 51/90 long-stratum LC quota failures, unchanged
 - **Phase 1 ranking direction**: Simple RAG > LC > Advanced RAG still holds (by 0.011)
 - **Phase 2 significance tests**: Must be recomputed against gold_evidence numbers
@@ -188,7 +194,8 @@ The following findings are unaffected by the faithfulness bug correction:
 2. **Table 2 (effect sizes / significance tests)**: Recompute with gold_evidence values.
 3. **Section 4.4 (length sensitivity)**: Replace entire table and narrative. The collapse
    finding is retracted; the operational failure finding is the correct story.
-4. **Section 4.6 (NIAH)**: Update faithfulness column; accuracy column unchanged.
+4. **Section 4.6 (NIAH)**: Update faithfulness and threshold-success columns; do not
+   describe the original NIAH accuracy values as human legal-accuracy labels.
 5. **Section 5 (ablation)**: Update faithfulness column; note baseline now ranks first.
 6. **Abstract / conclusion**: Soften "Simple RAG significantly outperforms LC" for Phase 2;
    note Phase 1 margin is 0.011 under corrected metric.

@@ -428,8 +428,9 @@ Interpretation:
 - [x] Recomputed `hallucination_rate` in CORRECTION_NOTE.md. Paper.md updates
   deferred until Stage 4 completes (optional) or author decides Stage 2 is
   sufficient for reporting.
-- [x] NIAH accuracy confirmed: uses `legal_accuracy` (human-evaluated, 0/1/2
-  scale), not a faithfulness threshold. NIAH accuracy figures are unaffected.
+- [x] NIAH threshold success corrected: the original NIAH "accuracy" column was
+  derived from a faithfulness threshold, not human `legal_accuracy`. Corrected
+  threshold success must be reported separately from faithfulness.
 - [x] `PHASE_II_PLAN.md` updated: title, section 1 (anomaly), section 2 (RQs),
   section 9 (publication framing). Motivating collapse narrative replaced with
   operational failure + NIAH framing.
@@ -437,7 +438,7 @@ Interpretation:
 Stage 5 log, 2026-06-27:
 
 **Critical finding:** Under gold_evidence, LC faithfulness INCREASES with verdict length
-(Short=0.578, Medium=0.606, Long=0.628 scored-only). The "0.448→0.533→0.205 collapse" was
+(Short=0.578, Medium=0.606, Long=0.628 scored-only). The "0.448 -> 0.533 -> 0.205 collapse" was
 entirely the evaluation bug. The real long-verdict failure is operational: 51/90 queries
 returned no answer (quota exhaustion), not faithfulness degradation when answers are produced.
 
@@ -447,10 +448,13 @@ returned no answer (quota exhaustion), not faithfulness degradation when answers
 - `PHASE_II_PLAN.md`: title and Sections 1, 2, 9 updated; workstreams A/B/C intact.
 
 **Paper changes required (Section 9 of CORRECTION_NOTE.md):**
-- Phase 2 main table: ranking reverses to LC > Simple RAG > Advanced RAG
+- Phase 2 main table: corrected interpretation is LC ~= Simple RAG > Advanced
+  RAG; LC has a numerical edge, but the LC-vs-Simple-RAG difference is
+  negligible and not statistically significant.
 - Phase 1 table: margin narrows (Simple RAG +0.011 over LC coverage-adjusted)
 - Length-sensitivity table: entire table invalidated; replace with operational failure story
-- NIAH: faithfulness column updated; accuracy column unchanged
+- NIAH: faithfulness and threshold-success columns updated; do not describe the
+  original threshold column as human legal accuracy
 - Ablation: baseline now ranks first, not hybrid search
 - Abstract: soften "Simple RAG significantly outperforms LC" for Phase 2
 
