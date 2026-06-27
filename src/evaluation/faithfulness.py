@@ -15,6 +15,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import time
 
 from google import genai
 from google.genai import types
@@ -31,7 +32,11 @@ class GroundingCheckSchema(BaseModel):
     reason: str
 
 _openai = OpenAI(api_key=os.getenv("OPENAI_API_KEY", ""))
-_gemini = genai.Client(api_key=os.getenv("GOOGLE_API_KEY", ""))
+_gemini_timeout_ms = int(os.getenv("GEMINI_REQUEST_TIMEOUT_MS", "120000"))
+_gemini = genai.Client(
+    api_key=os.getenv("GOOGLE_API_KEY", ""),
+    http_options=types.HttpOptions(timeout=_gemini_timeout_ms),
+)
 
 # ── Prompts ───────────────────────────────────────────────────────────────────
 
@@ -80,39 +85,50 @@ def _decompose_answer(answer: str, model: str) -> tuple[list[str], int, int]:
         return [], 0, 0
 
     prompt = _DECOMPOSE_PROMPT.format(answer=answer)
-    try:
-        if model.startswith("gemini"):
-            response = _gemini.models.generate_content(
-                model=model,
-                contents=prompt,
-                config=types.GenerateContentConfig(
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            if model.startswith("gemini"):
+                response = _gemini.models.generate_content(
+                    model=model,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        temperature=0.0,
+                        max_output_tokens=400,
+                    ),
+                )
+                raw = response.text.strip()
+                in_t  = response.usage_metadata.prompt_token_count if response.usage_metadata else 0
+                out_t = response.usage_metadata.candidates_token_count if response.usage_metadata else 0
+            else:
+                response = _openai.chat.completions.create(
+                    model=model,
+                    messages=[{"role": "user", "content": prompt}],
                     temperature=0.0,
-                    max_output_tokens=400,
-                ),
-            )
-            raw = response.text.strip()
-            in_t  = response.usage_metadata.prompt_token_count if response.usage_metadata else 0
-            out_t = response.usage_metadata.candidates_token_count if response.usage_metadata else 0
-        else:
-            response = _openai.chat.completions.create(
-                model=model,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.0,
-                max_tokens=400,
-            )
-            raw = response.choices[0].message.content.strip()
-            in_t  = response.usage.prompt_tokens if response.usage else 0
-            out_t = response.usage.completion_tokens if response.usage else 0
-        
-        statements = [s.strip() for s in raw.split("\n") if s.strip()]
-        return statements[:20], in_t, out_t  # cap to prevent runaway decompositions
-    except Exception as e:
-        log.warning(f"Decomposition failed: {e}")
-        return [answer], 0, 0   # fallback: treat whole answer as one statement
+                    max_tokens=400,
+                )
+                raw = response.choices[0].message.content.strip()
+                in_t  = response.usage.prompt_tokens if response.usage else 0
+                out_t = response.usage.completion_tokens if response.usage else 0
+
+            statements = [s.strip() for s in raw.split("\n") if s.strip()]
+            return statements[:20], in_t, out_t  # cap to prevent runaway decompositions
+        except Exception as e:
+            if attempt < max_retries - 1:
+                wait_s = 5 * (attempt + 1)
+                log.warning(
+                    f"Decomposition attempt {attempt + 1} failed: {e}; "
+                    f"retrying in {wait_s}s"
+                )
+                time.sleep(wait_s)
+                continue
+            raise RuntimeError(
+                f"Decomposition failed after {max_retries} attempts: {e}"
+            ) from e
 
 
 def _extract_json_with_flash(raw_text: str) -> dict:
-    """Use gemini-2.0-flash with structured output to extract supported/reason from free text."""
+    """Use a current cheap Gemini model to extract supported/reason from free text."""
     extraction_prompt = (
         f"Extract the grounding verdict from this evaluation text.\n\n"
         f"Evaluation text:\n{raw_text}\n\n"
@@ -120,7 +136,7 @@ def _extract_json_with_flash(raw_text: str) -> dict:
         f"Extract the reason given."
     )
     response = _gemini.models.generate_content(
-        model="gemini-2.0-flash",
+        model="gemini-2.5-flash-lite",
         contents=extraction_prompt,
         config={
             "temperature": 0.0,
@@ -141,7 +157,7 @@ def _check_grounding(statement: str, context: str, model: str) -> tuple[dict, in
     
     Two-model pipeline for Gemini:
       1. gemini-3-flash-preview evaluates grounding (free text, stronger reasoning)
-      2. gemini-2.0-flash extracts the verdict into structured JSON (reliable output)
+      2. gemini-2.5-flash-lite extracts the verdict into structured JSON
     """
     raw = ""
     
@@ -179,7 +195,7 @@ def _check_grounding(statement: str, context: str, model: str) -> tuple[dict, in
                 except (json.JSONDecodeError, ValueError):
                     pass
                 
-                # Step 3: Use gemini-2.0-flash to extract JSON from free text
+                # Step 3: Extract JSON from free-text reasoning
                 result = _extract_json_with_flash(raw)
                 return result, in_t, out_t
 
@@ -213,12 +229,19 @@ def _check_grounding(statement: str, context: str, model: str) -> tuple[dict, in
 
         except Exception as e:
             if attempt < max_retries - 1:
-                log.debug(f"Grounding attempt {attempt+1} failed: {e} — retrying")
+                wait_s = 5 * (attempt + 1)
+                log.warning(
+                    f"Grounding attempt {attempt + 1} failed: {e}; "
+                    f"retrying in {wait_s}s"
+                )
+                time.sleep(wait_s)
                 continue
-            log.warning(f"Grounding check failed: {e}. Raw response: {raw!r}")
-            return {"supported": False, "reason": f"evaluation error: {e}"}, 0, 0
+            raise RuntimeError(
+                f"Grounding check failed after {max_retries} attempts: {e}. "
+                f"Raw response: {raw!r}"
+            ) from e
     
-    return {"supported": False, "reason": "evaluation error: max retries exceeded"}, 0, 0
+    raise RuntimeError("Grounding check failed after exhausting retries")
 
 
 def evaluate_faithfulness(

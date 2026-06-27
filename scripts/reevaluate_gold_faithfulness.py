@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from concurrent.futures import ThreadPoolExecutor
 import json
 import random
 from dataclasses import dataclass
@@ -123,14 +124,22 @@ def write_jsonl(path: Path, records: Iterable[dict]) -> None:
 
 def select_inputs(collections: set[str], explicit_inputs: list[str] | None) -> list[ResultInput]:
     if explicit_inputs:
-        return [
-            ResultInput("custom", Path(input_path).stem, Path(input_path))
-            for input_path in explicit_inputs
-        ]
+        selected: list[ResultInput] = []
+        default_by_path = {item.path.resolve(): item for item in DEFAULT_INPUTS}
+        for input_path in explicit_inputs:
+            resolved = Path(input_path).resolve()
+            selected.append(
+                default_by_path.get(
+                    resolved,
+                    ResultInput("custom", resolved.stem, resolved),
+                )
+            )
+        return selected
     return [item for item in DEFAULT_INPUTS if item.collection in collections]
 
 
 def output_path_for(input_path: Path, limit_per_file: int | None) -> Path:
+    input_path = input_path.resolve()
     try:
         rel = input_path.relative_to(RESULTS)
     except ValueError:
@@ -219,6 +228,32 @@ def add_gold_evidence_faithfulness(record: dict, judge_model: str | None) -> dic
     return output
 
 
+def evaluate_records(
+    records: list[dict],
+    judge_model: str | None,
+    workers: int,
+    desc: str,
+) -> list[dict]:
+    workers = max(1, workers)
+    if workers == 1:
+        return [
+            add_gold_evidence_faithfulness(record, judge_model)
+            for record in tqdm(records, desc=desc)
+        ]
+
+    with ThreadPoolExecutor(max_workers=workers) as executor:
+        return list(
+            tqdm(
+                executor.map(
+                    lambda record: add_gold_evidence_faithfulness(record, judge_model),
+                    records,
+                ),
+                total=len(records),
+                desc=desc,
+            )
+        )
+
+
 def print_validation(item: ResultInput, validation: dict, selected_count: int, out_path: Path) -> None:
     print(f"\n[{item.collection}] {item.label}")
     print(f"  input: {item.path}")
@@ -264,6 +299,12 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--judge-model", default=None)
     parser.add_argument(
+        "--workers",
+        type=int,
+        default=1,
+        help="Number of parallel records to evaluate. Keep conservative to avoid rate limits.",
+    )
+    parser.add_argument(
         "--run",
         action="store_true",
         help="Actually call the judge and write outputs. Omit for validation-only dry run.",
@@ -272,6 +313,11 @@ def main() -> None:
         "--overwrite",
         action="store_true",
         help="Overwrite existing corrected output files.",
+    )
+    parser.add_argument(
+        "--skip-existing",
+        action="store_true",
+        help="Skip corrected output files that already exist.",
     )
     args = parser.parse_args()
 
@@ -287,6 +333,7 @@ def main() -> None:
     print(f"mode: {'RUN' if args.run else 'VALIDATION ONLY'}")
     print(f"judge_model: {args.judge_model or cfg.models.judge_model}")
     print(f"limit_per_file: {args.limit_per_file}")
+    print(f"workers: {args.workers}")
     print(f"output_root: {OUT_ROOT}")
 
     any_validation_errors = False
@@ -311,11 +358,17 @@ def main() -> None:
             if blocking_missing:
                 raise SystemExit(f"Blocking validation errors for {item.path}")
             if out_path.exists() and not args.overwrite:
+                if args.skip_existing:
+                    print(f"  skipped_existing: {out_path}")
+                    continue
                 raise SystemExit(f"Output exists; use --overwrite: {out_path}")
 
-            corrected = []
-            for record in tqdm(selected, desc=f"{item.collection}:{item.label}"):
-                corrected.append(add_gold_evidence_faithfulness(record, args.judge_model))
+            corrected = evaluate_records(
+                records=selected,
+                judge_model=args.judge_model,
+                workers=args.workers,
+                desc=f"{item.collection}:{item.label}",
+            )
             write_jsonl(out_path, corrected)
             print(f"  wrote: {out_path}")
 
