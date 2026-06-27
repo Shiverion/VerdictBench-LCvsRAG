@@ -4,20 +4,21 @@
 [![Zenodo](https://zenodo.org/badge/DOI/10.5281/zenodo.20086806.svg)](https://doi.org/10.5281/zenodo.20086806)
 [![arXiv](https://img.shields.io/badge/arXiv-Pending-orange)]()
 
-> **"When Context Is Not Enough: Retrieval Outperforms Full-Document Prompting on Indonesian Constitutional Court Verdicts"**
+
+> **"When Context Is Not Enough: Benchmarking Long Context and Retrieval-Augmented Generation on Indonesian Constitutional Court Verdicts"**
 
 **Preprints:**
-- 📄 **OpenReview**: https://openreview.net/forum?id=1Z6OUt0T6Q
-- 📄 **Zenodo**: https://doi.org/10.5281/zenodo.20086806
-- 📄 **arXiv**: Pending endorsement (cs.CL)
+- **OpenReview**: https://openreview.net/forum?id=1Z6OUt0T6Q
+- **Zenodo**: https://doi.org/10.5281/zenodo.20086806
+- **arXiv**: Pending endorsement (cs.CL)
 
 **Status:** Submitted to AACL-IJCNLP 2026
 
 ## Quick Links
-- [📊 Results & Figures](#-results--analysis)
-- [📦 Dataset](data/qa_dataset/)
-- [🔧 Installation](#-quickstart)
-- [📖 Paper (OpenReview)](https://openreview.net/forum?id=1Z6OUt0T6Q)
+- [Results & Figures](#results--analysis)
+- [Public Release Artifacts](public_release/)
+- [Installation](#quickstart)
+- [Paper (OpenReview)](https://openreview.net/forum?id=1Z6OUt0T6Q)
 
 ---
 
@@ -25,64 +26,71 @@
 
 The recent expansion of large language model (LLM) context windows raises a practical question for document-grounded question answering: if an entire source document fits into the prompt, is retrieval-augmented generation (RAG) still necessary?
 
-We evaluate this on 50 Indonesian Constitutional Court verdicts and 300 human-reviewed QA pairs. **Simple RAG consistently outperforms Long Context** (0.857 vs 0.524 faithfulness), with LC collapsing on long documents (0.205 faithfulness).
+VerdictBench evaluates this on 50 Indonesian Constitutional Court verdicts and 300 human-reviewed QA pairs. After auditing a Long Context faithfulness-evaluation bug, **the Phase 2 faithfulness difference between Long Context and Dense RAG is small and not statistically significant**, while Dense RAG remains 16-25x cheaper and avoids the long-verdict non-response failures seen in Phase 1.
 
 **Key findings:**
-- ✅ Simple RAG > Advanced RAG > Long Context (stable across Gemini & GPT-4o)
-- ✅ Hybrid BM25+dense search: +9.2pp faithfulness
-- ❌ Cross-encoder reranking: -9.0pp (language mismatch)
-- ❌ Long Context fails exactly where it should win (long documents)
+- Phase 2 ordering under gold-evidence faithfulness: Long Context ~= Dense RAG > Multi-Stage RAG.
+- Dense RAG is 24.8x cheaper than Long Context under Gemini Flash and 16.3x cheaper under GPT-4o Mini.
+- In Phase 1, all 51 Long Context quota failures occurred in the long-verdict stratum.
+- Multi-Stage RAG components reduced gold-evidence faithfulness relative to the Dense RAG baseline; cross-encoder reranking remains a domain-transfer risk.
 
 ---
 
-> *Research codebase and benchmark for comparing Long Context, Simple RAG, and Advanced RAG on Indonesian constitutional legal text — 50 verdicts, 300 QA pairs, and publication-oriented analysis artifacts.*
+> *Research codebase and benchmark for comparing Long Context, Dense RAG, and Multi-Stage RAG on Indonesian constitutional legal text -- 50 verdicts, 300 QA pairs, and publication-oriented analysis artifacts.*
 
-## 🔬 Overview
+## Overview
 
 This repository contains the **full research pipeline** for an empirical study comparing three LLM-based QA architectures on a corpus of 50 Indonesian Constitutional Court (*Mahkamah Konstitusi*, MK) verdicts.
 
-![Phase 2 faithfulness comparison](figures/phase2_faithfulness.png)
+![Phase 2 gold-evidence faithfulness comparison](figures/phase2_goldfaithfulness_corrected.png)
 
-*Figure. Across both Gemini 2.5 Flash and GPT-4o Mini, the architecture ranking stays stable: Simple RAG performs best, Advanced RAG is second, and Long Context trails both.*
+*Figure. Under gold-evidence faithfulness, Long Context and Dense RAG overlap strongly across both model families; Multi-Stage RAG is consistently lower.*
 
-## 📍 Start Here
+## Privacy & Public Data Release
+
+Raw verdict text, sectioned verdict JSON, reviewed QA rows, generated answers, retrieved chunks, gold evidence paragraphs, annotation databases, and per-query result JSONL are **not redistributed** in the public repository. These artifacts can contain personal data present in public court documents, including names, addresses, occupations, identity-number references, and party details.
+
+The public release instead provides source code, paper artifacts, figures, aggregate result tables, and a privacy-minimized verdict manifest in [**public_release/**](public_release/). To reproduce the private working dataset, use the reconstruction pipeline against official MKRI sources and keep generated data local.
+
+## Start Here
 
 If you are new to the repository, use this reading order:
 
 1. [**README.md**](README.md): project overview, main findings, and how to run the core pipeline.
-2. [**report.md**](report.md): paper-style narrative grounded in the committed experimental outputs.
-3. [**NOTEBOOK_KEY_FINDINGS.md**](NOTEBOOK_KEY_FINDINGS.md): shortest findings-only summary of the executed notebook outputs.
+2. [**Paper.md**](Paper.md): paper-style narrative grounded in committed artifacts.
+3. [**CORRECTION_NOTE.md**](CORRECTION_NOTE.md): details of the faithfulness-evaluation correction.
 4. [**Runbook.md**](Runbook.md): end-to-end execution guide for rebuilding the corpus, rerunning experiments, and troubleshooting.
 5. [**Structure.md**](Structure.md): file-by-file map of the repository layout.
-6. [`results/`](results): archived experiment outputs used in the report.
+6. [`public_release/`](public_release): aggregate public results and privacy-minimized manifest.
 
 If you only want the shortest possible path:
 
-- To understand the research claim, read [**report.md**](report.md).
-- To skim only the highest-signal results, read [**NOTEBOOK_KEY_FINDINGS.md**](NOTEBOOK_KEY_FINDINGS.md).
+- To understand the current research claim, read [**Paper.md**](Paper.md).
+- To understand what changed after the audit, read [**CORRECTION_NOTE.md**](CORRECTION_NOTE.md).
 - To reproduce the pipeline, follow [**Runbook.md**](Runbook.md).
 - To navigate the codebase, open [**Structure.md**](Structure.md).
 
 ### Research Questions
 
-1. **RQ1** — Does Long Context outperform RAG when the entire document fits within the context window?
-2. **RQ2** — Does the advantage of RAG increase as document length grows?
-3. **RQ3** — Which Advanced RAG components contribute most to faithfulness improvements?
-4. **RQ4** — How does the choice of LLM (Flash 2.5 vs GPT-4o Mini) interact with architectural choice?
+1. **RQ1** -- Does Long Context outperform retrieval when the entire document fits within the context window?
+2. **RQ2** -- How does verdict length affect faithfulness quality and operational completeness?
+3. **RQ3** -- Which Multi-Stage RAG components improve or degrade faithfulness?
+4. **RQ4** -- How does the choice of LLM (Gemini 2.5 Flash vs GPT-4o Mini) interact with architectural choice?
 
 ### Architectures Compared
 
 | Architecture | Description | Context Strategy |
 |:---|:---|:---|
 | **Long Context (LC)** | Full verdict injected into prompt | Up to 1M tokens (Gemini) |
-| **Simple RAG** | Fixed-size chunking + FAISS top-k retrieval | 512-token chunks, top-5 |
-| **Advanced RAG** | Query rewriting + hybrid search + reranking + metadata filtering | Multi-stage pipeline |
+| **Dense RAG** | Historical `simple_rag` condition: fixed-size chunking + dense FAISS top-k retrieval | 512-token chunks, top-5 |
+| **Multi-Stage RAG** | Historical `advanced_rag` condition: query rewriting + metadata filtering + hybrid retrieval + reranking | QR + MF + HS + RR |
 
-### 🛠️ Quality Assurance
+The repository keeps `simple_rag` and `advanced_rag` in code and result paths for reproducibility. The paper-facing names are more precise: `Dense RAG` describes the baseline retrieval mechanism, while `Multi-Stage RAG` avoids implying that the larger pipeline is inherently better.
+
+### Quality Assurance
 To ensure maximum scientific validity, the dataset generation pipeline enforces strict validation:
 - **Human IAA (Agreement + Kappa)**: A 10% overlap sample is independently annotated and reported with observed agreement, Cohen's kappa, and label distribution.
 - **Automated Consistency Checks**: Surgical AI scripts verify verbatim grounding and detect semantic duplications before human annotation.
-
 ---
 
 ## 📐 Architecture
@@ -197,7 +205,7 @@ uv run python experiments/run_phase1.py
 uv run jupyter notebook notebooks/04_phase1_results.ipynb
 ```
 
-> 📖 For the complete step-by-step guide with troubleshooting, see [**Runbook.md**](Runbook.md). For the paper-style write-up of the committed results, see [**report.md**](report.md).
+> For the complete step-by-step guide with troubleshooting, see [**Runbook.md**](Runbook.md). For the paper-style write-up, see [**Paper.md**](Paper.md).
 
 ---
 
@@ -310,7 +318,7 @@ lc-vs-rag-mk-verdicts/
 │   ├── configs/
 │   │   ├── phase1_baseline.yaml          # Gemini 2.5 Flash, all 3 architectures, full 300 QA
 │   │   ├── phase2_multimodel.yaml        # Gemini 2.5 Flash vs GPT-4o, 2×3 factorial
-│   │   ├── ablation.yaml                 # 6 Advanced RAG ablation conditions, 100 QA subset
+│   │   ├── ablation.yaml                 # 6 Multi-Stage RAG ablation conditions, 100 QA subset
 │   │   ├── chunking_comparison.yaml      # fixed-size vs section-boundary, 100 QA subset
 │   │   └── sensitivity.yaml              # chunk_size × top_k grid search
 │   │
@@ -319,9 +327,9 @@ lc-vs-rag-mk-verdicts/
 │   │   ├── runner.py                     # core: load config → run system → log results
 │   │   └── batch_evaluator.py            # evaluates a results JSONL against all metrics
 │   │
-│   ├── run_phase1.py                     # Phase 1: LC vs Simple RAG vs Advanced RAG
+│   ├── run_phase1.py                     # Phase 1: LC vs Dense RAG vs Multi-Stage RAG
 │   ├── run_phase2.py                     # Phase 2: Gemini vs GPT-4o × 3 architectures
-│   ├── run_ablation.py                   # Advanced RAG component ablation
+│   ├── run_ablation.py                   # Multi-Stage RAG component ablation
 │   ├── run_niah.py                       # Needle-in-a-haystack experiment
 │   ├── run_knowledge_update.py           # 3 new verdicts; update latency + QA perf
 │   └── run_chunking_comparison.py        # fixed-size vs section-boundary chunking
@@ -403,7 +411,7 @@ lc-vs-rag-mk-verdicts/
 |:---|:---|
 | **Model** | Gemini 2.5 Flash (1M context window) |
 | **Model ID** | `models/gemini-2.5-flash` |
-| **Conditions** | LC / Simple RAG / Advanced RAG |
+| **Conditions** | LC / Dense RAG / Multi-Stage RAG |
 | **Dataset** | 300 QA pairs across 50 verdicts |
 | **Temperature** | 0.0 |
 | **Max Output Tokens** | 512 |
@@ -417,7 +425,7 @@ lc-vs-rag-mk-verdicts/
 
 ### Ablation Study
 
-Six progressive conditions isolating Advanced RAG components:
+Six progressive conditions isolating Multi-Stage RAG components:
 
 | Condition | Components |
 |:---|:---|
@@ -454,34 +462,11 @@ Six progressive conditions isolating Advanced RAG components:
 
 ---
 
-## 📈 Results & Analysis
+## Results & Analysis
 
-The latest aggregated metrics are available in [**report_totals.txt**](report_totals.txt). Full experimental records are stored in the [**results/**](results) directory. Results are saved as JSONL — one record per QA pair with full metadata:
+The aggregate interpretation is in [**Paper.md**](Paper.md), with the audit details in [**CORRECTION_NOTE.md**](CORRECTION_NOTE.md). Public result artifacts are privacy-minimized aggregate tables in [**public_release/aggregate_results/**](public_release/aggregate_results/). Full per-query JSONL records are intentionally excluded from the public repository because they include free-text questions, answers, retrieved chunks, gold evidence paragraphs, and judge statement details that may reproduce personal data from court documents.
 
-```json
-{
-  "question_id": "a3f9c021",
-  "verdict_id": "1_PUU-XIX_2021",
-  "condition": "simple_rag_cs512_k5_fixed",
-  "model": "gemini-2.5-flash",
-  "question": "Apa amar putusan?",
-  "answer": "Mahkamah menolak permohonan Pemohon untuk seluruhnya.",
-  "gold_answer": "Menolak permohonan Pemohon untuk seluruhnya.",
-  "question_type": "boundary",
-  "stratum": "medium",
-  "input_tokens": 3241,
-  "cost_usd": 0.000486,
-  "latency_s": 2.14,
-  "faithfulness": 0.9167,
-  "hallucination_rate": 0.0833,
-  "hallucination_flag": false,
-  "bertscore_f1": 0.8821,
-  "context_precision": 0.8,
-  "context_recall": 1.0
-}
-```
-
-A Phase 1 human legal-accuracy spot-check was also completed on a 0/1/2 rubric. On the filtered sample of non-obviously-truncated answers, mean scores were `1.73` for Simple RAG, `1.47` for Advanced RAG, and `1.80` for Long Context. This result is reported in the paper with an explicit caveat: because the review workflow excluded truncated outputs, it favors Long Context's surviving completions and should not be read as a full-system ranking.
+A Phase 1 human legal-accuracy spot-check was also completed on a 0/1/2 rubric. On the filtered sample of non-obviously-truncated answers, mean scores were `1.73` for Dense RAG, `1.47` for Multi-Stage RAG, and `1.80` for Long Context. This result is reported in the paper with an explicit caveat: because the review workflow excluded truncated outputs, it favors Long Context's surviving completions and should not be read as a full-system ranking.
 
 ### Analysis Notebooks
 
@@ -551,21 +536,9 @@ uv run pytest --cov=src --cov-report=term-missing
 
 ---
 
-## 📚 QA Dataset Schema
+## QA Dataset Policy
 
-Each QA pair in `qa_pairs_full.jsonl` follows this schema:
-
-```json
-{
-  "question_id": "a3f9c021",
-  "verdict_id": "1_PUU-XIX_2021",
-  "question_type": "factual_extractive",
-  "question": "Siapa ketua panel hakim dalam perkara ini?",
-  "gold_answer": "Prof. Dr. Anwar Usman, S.H., M.H.",
-  "gold_paragraphs": ["Panel hakim terdiri dari Anwar Usman sebagai ketua..."],
-  "status": "accepted"
-}
-```
+The private reviewed QA files use fields such as `question`, `gold_answer`, and `gold_paragraphs`, but those fields are not redistributed publicly. Public examples must be manually reviewed and redacted before release. The placeholder file [**public_release/sample_redacted_qa.jsonl**](public_release/sample_redacted_qa.jsonl) documents this policy.
 
 ### Question Types
 
@@ -583,7 +556,7 @@ Each QA pair in `qa_pairs_full.jsonl` follows this schema:
 | Document | Description |
 |:---|:---|
 | [**ANNOTATION_APP.md**](ANNOTATION_APP.md) | Web annotation system for 2-annotator overlap review and Cohen's kappa |
-| [**report.md**](report.md) | Publication-style research report grounded in the committed `results/` artifacts |
+| [**Paper.md**](Paper.md) | Publication-style paper draft grounded in committed artifacts |
 | [**Runbook.md**](Runbook.md) | Complete step-by-step execution guide with troubleshooting |
 | [**Structure.md**](Structure.md) | Detailed architecture and file documentation |
 | `.env.example` | Environment variable template |
@@ -596,7 +569,7 @@ If you use this dataset or code in your research, please cite:
 
 ```bibtex
 @misc{izzulhaq2025context,
-  title={When Context Is Not Enough: Retrieval Outperforms Full-Document Prompting on Indonesian Constitutional Court Verdicts},
+  title={When Context Is Not Enough: Benchmarking Long Context and Retrieval-Augmented Generation on Indonesian Constitutional Court Verdicts},
   author={Izzulhaq, Muhammad Iqbal Hilmy},
   year={2025},
   url={https://openreview.net/forum?id=1Z6OUt0T6Q}
