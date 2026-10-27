@@ -96,41 +96,70 @@ To ensure maximum scientific validity, the dataset generation pipeline enforces 
 ## 📐 Architecture
 
 ```mermaid
-graph TB
-    subgraph "Data Pipeline"
-        A[Raw Verdicts<br/>887 .txt/.json] --> B[Audit & Clean]
-        B --> C[Section Extraction]
-        C --> D[Metadata Enrichment]
-        D --> E[Stratified Sampling<br/>50 verdicts]
+flowchart TD
+    subgraph data["Data Pipeline"]
+        direction TB
+        Raw["Raw Verdicts<br/>887 .txt/.json"] --> Audit["Audit & Clean"]
+        Audit --> Sections["Section Extraction"]
+        Sections --> Metadata["Metadata Enrichment"]
+        Metadata --> Sample["Stratified Sampling<br/>50 verdicts"]
     end
 
-    subgraph "QA Dataset Construction"
-        E --> F[LLM Draft Generation<br/>Gemini 2.5 Flash]
-        F --> G[Automated Consistency<br/>Grounding/Duplicates]
-        G --> H[Human Annotation<br/>reviewer_cli.py]
-        H --> I["IAA Check<br/>(Agreement + Kappa)"]
-        I --> J[300 QA Pairs]
+    subgraph qa["QA Dataset Construction"]
+        direction TB
+        Draft["LLM Draft Generation<br/>Gemini 2.5 Flash"] --> Checks["Automated Consistency<br/>grounding / duplicates"]
+        Checks --> Human["Human Annotation<br/>reviewer_cli.py"]
+        Human --> IAA["IAA Check<br/>Agreement + Kappa"]
+        IAA --> Pairs["300 QA Pairs"]
     end
 
-    subgraph "Indexing"
-        E --> J[Chunking<br/>256/512/1024]
-        J --> K[Embedding<br/>Gemini Embedding]
-        K --> L[FAISS Index]
+    subgraph indexing["Indexing"]
+        direction TB
+        Chunk["Chunking<br/>256 / 512 / 1024"] --> Embed["Embedding<br/>Gemini Embedding"]
+        Embed --> Faiss[("FAISS Index")]
     end
 
-    subgraph "Experiments"
-        J --> M[Phase 1: Single Model<br/>Gemini 2.5 Flash]
-        J --> N[Phase 2: Multi-Model<br/>Gemini 2.5 Flash × GPT-4o Mini]
-        J --> O[Ablation Study<br/>6 RAG Conditions]
-        J --> P[Additional<br/>NIAH, Length, Chunking]
+    Sample --> Draft
+    Sample --> Chunk
+```
+
+```mermaid
+flowchart TD
+    Pairs["300 QA Pairs"]
+
+    subgraph experiments["Experiments"]
+        direction TB
+        Phase1["Phase 1<br/>Gemini 2.5 Flash"]
+        Phase2["Phase 2<br/>Gemini 2.5 Flash × GPT-4o Mini"]
+        Ablation["Ablation Study<br/>6 RAG conditions"]
+        Additional["Additional Studies<br/>NIAH, length, chunking"]
     end
 
-    subgraph "Evaluation"
-        M & N & O & P --> Q[Faithfulness<br/>Two-Model Judge]
-        Q --> R[BERTScore<br/>IndoBERT]
-        R --> S[Statistical Tests<br/>Wilcoxon + Bootstrap CI]
-        S --> T[11 Analysis Notebooks]
+    subgraph evaluation["Evaluation"]
+        direction TB
+        Faith["Faithfulness<br/>Two-model judge"]
+        Bert["BERTScore<br/>IndoBERT"]
+        Stats["Statistical Tests<br/>Wilcoxon + bootstrap CI"]
+        Notebooks["11 Analysis Notebooks"]
     end
+
+    Pairs --> Phase1
+    Pairs --> Phase2
+    Pairs --> Ablation
+    Pairs --> Additional
+
+    Phase1 --> Faith
+    Phase1 --> Bert
+    Phase2 --> Faith
+    Phase2 --> Bert
+    Ablation --> Faith
+    Ablation --> Bert
+    Additional --> Faith
+    Additional --> Bert
+
+    Faith --> Stats
+    Bert --> Stats
+    Stats --> Notebooks
 ```
 
 ---
@@ -154,19 +183,76 @@ The Architecture diagram above shows the research pipeline. This section covers 
 
 ### Component View
 
-```text
- src/data/        audit ─► clean ─► section extraction ─► metadata enrichment ─► stratified sampler
- src/qa/          LLM draft generator ─► grounding checker ─► duplicate detector
-                  ─► reviewer_cli (human) ─► IAA calculator (agreement + Cohen's kappa)
- src/annotation/  annotation API + DB for the review workflow
- src/indexing/    chunkers (fixed 256/512/1024, section boundary) ─► embedder (batched, retry)
-                  ─► FAISS vector store
- src/systems/     long_context · simple_rag (Dense RAG) · advanced_rag
-                  (query_rewriter → metadata_filter → hybrid_search (BM25 + dense) → reranker)
- src/evaluation/  faithfulness (two-model judge: reasoning model → JSON extractor)
-                  hallucination · bertscore (IndoBERT) · retrieval_metrics · cost_tracker · latency_tracker
-                  legal_accuracy_cli (human 0/1/2 spot check)
- notebooks/       11 analysis notebooks ─► Paper.md, figures, public_release/aggregate_results
+```mermaid
+flowchart TD
+    subgraph data["src/data"]
+        direction TB
+        Audit["Audit"] --> Clean["Clean"]
+        Clean --> Extract["Section Extraction"]
+        Extract --> Enrich["Metadata Enrichment"]
+        Enrich --> Sample["Stratified Sampler"]
+    end
+
+    subgraph qa["src/qa and src/annotation"]
+        direction TB
+        Draft["LLM Draft Generator"] --> Ground["Grounding Checker"]
+        Ground --> Duplicate["Duplicate Detector"]
+        Duplicate --> Review["Human Review<br/>reviewer_cli"]
+        Review --> IAA["IAA Calculator<br/>agreement + Cohen's kappa"]
+        IAA --> Pairs["Reviewed QA Pairs"]
+        Review --> Annotation[("Annotation API + DB")]
+    end
+
+    subgraph indexing["src/indexing"]
+        direction TB
+        Chunkers["Chunkers<br/>fixed 256/512/1024<br/>section boundary"] --> Embedder["Embedder<br/>batched + retry"]
+        Embedder --> Faiss[("FAISS Vector Store")]
+    end
+
+    Sample --> Draft
+    Sample --> Chunkers
+```
+
+```mermaid
+flowchart TD
+    Contract["Shared QA Contract<br/>question → context → answer"]
+
+    subgraph systems["src/systems"]
+        direction TB
+        Long["long_context<br/>Long Context"]
+        Dense["simple_rag<br/>Dense RAG<br/>FAISS top-k"]
+
+        subgraph multi["advanced_rag / Multi-Stage RAG"]
+            direction TB
+            Rewrite["Query Rewriter"] --> Filter["Metadata Filter"]
+            Filter --> Hybrid["Hybrid Search<br/>BM25 + dense"]
+            Hybrid --> Rerank["Reranker"]
+        end
+    end
+
+    Contract --> Long
+    Contract --> Dense
+    Contract --> Rewrite
+
+    Long --> Answers["System Answers"]
+    Dense --> Answers
+    Rerank --> Answers
+
+    subgraph evaluation["src/evaluation"]
+        direction TB
+        Reasoning["Faithfulness<br/>Reasoning Model"] --> Extractor["JSON Extractor"]
+        Metrics["Other Metrics<br/>hallucination + BERTScore<br/>retrieval + cost + latency"]
+        Legal["Legal Accuracy<br/>human 0/1/2 spot check"]
+    end
+
+    Answers --> Reasoning
+    Answers --> Metrics
+    Answers --> Legal
+
+    Extractor --> Notebooks["11 Analysis Notebooks"]
+    Metrics --> Notebooks
+    Legal --> Notebooks
+    Notebooks --> Outputs["Paper.md + figures<br/>aggregate results"]
 ```
 
 Every system answers through the same question → context → answer contract, so the evaluation layer is identical across conditions. The paper-facing names (Dense RAG, Multi-Stage RAG) map to the historical code paths `simple_rag` and `advanced_rag`, kept unchanged for reproducibility.
