@@ -135,6 +135,63 @@ graph TB
 
 ---
 
+## System Design
+
+The Architecture diagram above shows the research pipeline. This section covers the requirements of the benchmark harness, how the three QA systems sit behind one interface, how evaluation is kept fair, and the trade-offs.
+
+### Requirements
+
+**Functional**
+- Build a stratified 50-verdict corpus and a 300-pair human-reviewed QA set with measured inter-annotator agreement.
+- Run Long Context, Dense RAG, and Multi-Stage RAG (plus 6 ablation conditions) under identical prompts, models, and decoding settings.
+- Score faithfulness, hallucination, BERTScore, retrieval precision and recall, cost, and latency, with paired statistical tests.
+
+**Non-functional**
+- **Fair comparison**: same questions, temperature 0.0, fixed output cap, same judge pipeline for every condition.
+- **Cost discipline**: track actual token spend per phase (about US$20 in total).
+- **Privacy**: public artefacts are aggregate tables only; per-query records that may reproduce personal data from court documents stay private.
+- **Robustness to provider limits**: batched embedding and judge calls with retry and backoff; quota failures are recorded as outcomes, not silently dropped.
+
+### Component View
+
+```text
+ src/data/        audit ─► clean ─► section extraction ─► metadata enrichment ─► stratified sampler
+ src/qa/          LLM draft generator ─► grounding checker ─► duplicate detector
+                  ─► reviewer_cli (human) ─► IAA calculator (agreement + Cohen's kappa)
+ src/annotation/  annotation API + DB for the review workflow
+ src/indexing/    chunkers (fixed 256/512/1024, section boundary) ─► embedder (batched, retry)
+                  ─► FAISS vector store
+ src/systems/     long_context · simple_rag (Dense RAG) · advanced_rag
+                  (query_rewriter → metadata_filter → hybrid_search (BM25 + dense) → reranker)
+ src/evaluation/  faithfulness (two-model judge: reasoning model → JSON extractor)
+                  hallucination · bertscore (IndoBERT) · retrieval_metrics · cost_tracker · latency_tracker
+                  legal_accuracy_cli (human 0/1/2 spot check)
+ notebooks/       11 analysis notebooks ─► Paper.md, figures, public_release/aggregate_results
+```
+
+Every system answers through the same question → context → answer contract, so the evaluation layer is identical across conditions. The paper-facing names (Dense RAG, Multi-Stage RAG) map to the historical code paths `simple_rag` and `advanced_rag`, kept unchanged for reproducibility.
+
+### Evaluation Integrity
+
+- **Two-stage judge**: a reasoning model produces the judgement and a second model extracts structured JSON, which separates judgement quality from formatting failures.
+- **Gold-evidence faithfulness**: answers are judged against annotated gold paragraphs, so retrieval misses cannot inflate a RAG score.
+- **Audit trail**: the Long Context faithfulness-evaluation bug and its correction are documented in `CORRECTION_NOTE.md`, and the affected results were recomputed.
+
+### Trade-offs
+
+| Decision | Benefit | Cost |
+| --- | --- | --- |
+| LLM-drafted QA + human review | 300 pairs at feasible cost | Possible stylistic bias toward the drafting model |
+| LLM-as-judge for faithfulness | Scales to every query and condition | Judge error; mitigated with a human legal-accuracy spot check |
+| Fixed 512-token chunks, top-5 as the baseline | Simple, comparable to the literature | Not tuned per verdict structure (tested separately in the chunking study) |
+| Aggregate-only public release | Protects personal data in court records | External replication needs a data-access request |
+
+### What to Revisit as It Grows
+
+- Add a cost-aware router (Dense RAG by default, Long Context only for short verdicts or low-confidence answers).
+- Fine-tune or domain-adapt the cross-encoder reranker on Indonesian legal text before re-testing Multi-Stage RAG.
+- Expand to more courts and question types, with a held-out judge-calibration set.
+
 ## 🚀 Quickstart
 
 ### Prerequisites
